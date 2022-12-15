@@ -1,0 +1,5 @@
+<map id="qt_ModbusClient" name="qt_ModbusClient">
+<area shape="rect" id="node1" title=" " alt="" coords="36,80,155,107"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,5,76,32"/>
+<area shape="rect" id="node3" href="$class_modbus_client.html" title="Modbus client serial communication virtual class. To be implemented by device drivers." alt="" coords="101,5,202,32"/>
+</map>

@@ -1,0 +1,19 @@
+Modbus timer config information
+
+Windows/QT_Windows: 
+
+connection_config - set in application
+actuator->connection_config.target_baud_rate_bps = 625000;
+actuator->connection_config.target_delay_us = 2000;
+actuator->connection_config.req_num_discovery_pings = 3;
+actuator->connection_config.response_timeout_us = 100000;
+
+default values - set in mb_config.h
+#define DEFAULT_INTERFRAME_uS	2000	
+#define DEFAULT_INTERCHAR_uS	16000 	
+#define DEFAULT_TURNAROUND_uS	2000	
+#define DEFAULT_RESPONSE_uS    	100000	
+#define DEFAULT_CONNECTION_PAUSE_uS	750000
+
+
+

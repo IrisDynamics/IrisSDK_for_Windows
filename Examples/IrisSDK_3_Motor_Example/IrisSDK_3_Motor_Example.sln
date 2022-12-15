@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32002.261
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IrisSDK_3_Motor_Example", "IrisSDK_3_Motor_Example\IrisSDK_3_Motor_Example.vcxproj", "{F029055B-BB18-4E85-B6D3-FFD17EB7C8FF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F029055B-BB18-4E85-B6D3-FFD17EB7C8FF}.Debug|x64.ActiveCfg = Debug|x64
+		{F029055B-BB18-4E85-B6D3-FFD17EB7C8FF}.Debug|x64.Build.0 = Debug|x64
+		{F029055B-BB18-4E85-B6D3-FFD17EB7C8FF}.Debug|x86.ActiveCfg = Debug|Win32
+		{F029055B-BB18-4E85-B6D3-FFD17EB7C8FF}.Debug|x86.Build.0 = Debug|Win32
+		{F029055B-BB18-4E85-B6D3-FFD17EB7C8FF}.Release|x64.ActiveCfg = Release|x64
+		{F029055B-BB18-4E85-B6D3-FFD17EB7C8FF}.Release|x64.Build.0 = Release|x64
+		{F029055B-BB18-4E85-B6D3-FFD17EB7C8FF}.Release|x86.ActiveCfg = Release|Win32
+		{F029055B-BB18-4E85-B6D3-FFD17EB7C8FF}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {69EBF079-DDA4-4B69-80CB-D842301B7249}
+	EndGlobalSection
+EndGlobal

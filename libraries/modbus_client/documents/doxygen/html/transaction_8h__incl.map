@@ -1,0 +1,8 @@
+<map id="transaction.h" name="transaction.h">
+<area shape="rect" id="node1" title="MODBUS RTU frame object for outgoing and incoming requests." alt="" coords="53,5,150,32"/>
+<area shape="rect" id="node2" title=" " alt="" coords="18,155,84,181"/>
+<area shape="rect" id="node3" href="$mb__crc_8h.html" title=" " alt="" coords="112,80,188,107"/>
+<area shape="rect" id="node5" href="$types_8h.html" title=" " alt="" coords="22,80,88,107"/>
+<area shape="rect" id="node6" title=" " alt="" coords="212,80,391,107"/>
+<area shape="rect" id="node4" href="$mb__config_8h.html" title=" " alt="" coords="108,155,200,181"/>
+</map>

@@ -1,0 +1,12 @@
+<map id="message_queue.h" name="message_queue.h">
+<area shape="rect" id="node1" title="Buffer queue for transmitting and receiving messages through the UART channels." alt="" coords="389,5,517,32"/>
+<area shape="rect" id="node2" href="$modbus__client_8h.html" title="Modbus client serial communication virtual class." alt="" coords="395,80,512,107"/>
+<area shape="rect" id="node3" href="$modbus__client__application_8h.html" title="Base implementation of a Modbus client application layer." alt="" coords="5,155,192,181"/>
+<area shape="rect" id="node7" href="$modbus__client__k20_8h.html" title="Eagle (k20) device driver for Modbus client serial communication." alt="" coords="217,155,362,181"/>
+<area shape="rect" id="node8" href="$qt__modbus__client_8h.html" title="Virtual device driver for Modbus client serial communication using qt ports and timers." alt="" coords="386,155,521,181"/>
+<area shape="rect" id="node9" href="$windows__modbus__client_8h.html" title="Virtual device driver for Modbus client serial communication using the Windows API." alt="" coords="545,155,719,181"/>
+<area shape="rect" id="node10" href="$zynq7000__modbus__client_8h.html" title="Zynq7000 device driver for Modbus client serial communication." alt="" coords="743,155,923,181"/>
+<area shape="rect" id="node4" href="$iris__client__application_8h.html" title="Establishes a Modbus connection status between a client and server device." alt="" coords="20,229,177,256"/>
+<area shape="rect" id="node5" href="$actuator_8h.html" title="Actuator object that abstracts the use of the modbus library/communications." alt="" coords="59,304,139,331"/>
+<area shape="rect" id="node6" href="$pneumatic__controller_8h.html" title="Pneumatic Controller object that abstracts the use of the modbus library/ communication with an Pneum..." alt="" coords="22,379,175,405"/>
+</map>

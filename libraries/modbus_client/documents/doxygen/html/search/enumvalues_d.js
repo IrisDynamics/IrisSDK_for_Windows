@@ -1,0 +1,21 @@
+var searchData=
+[
+  ['r_5foverrun_5ferror_0',['R_OVERRUN_ERROR',['../class_transaction.html#a29a8b5507ace357a173f4eea3e5455b4a857fc14f4abc9862dc9f1ae29fd18151',1,'Transaction']]],
+  ['read_5fcoils_1',['read_coils',['../class_modbus_client_application.html#ab85e242e26c1f5977fc44e4d3933991ca1d29d874ba2a5aeda3b35e08aabbcfae',1,'ModbusClientApplication']]],
+  ['read_5fdiscrete_5finputs_2',['read_discrete_inputs',['../class_modbus_client_application.html#ab85e242e26c1f5977fc44e4d3933991ca66009dfbd2f21a9b929fe1221c9bd043',1,'ModbusClientApplication']]],
+  ['read_5fexception_5fstatus_3',['read_exception_status',['../class_modbus_client_application.html#ab85e242e26c1f5977fc44e4d3933991ca1ae75f860a35afa3f8bbf2d8c0f51c2d',1,'ModbusClientApplication']]],
+  ['read_5fholding_5fregisters_4',['read_holding_registers',['../class_modbus_client_application.html#ab85e242e26c1f5977fc44e4d3933991ca997f4d8e149ab2795100b8ff363c1494',1,'ModbusClientApplication']]],
+  ['read_5finput_5fregisters_5',['read_input_registers',['../class_modbus_client_application.html#ab85e242e26c1f5977fc44e4d3933991cad4ded03daece41567828fe51440e7b76',1,'ModbusClientApplication']]],
+  ['read_5fwrite_5fmultiple_5fregisters_6',['read_write_multiple_registers',['../class_modbus_client_application.html#ab85e242e26c1f5977fc44e4d3933991cac776cfe0b5789a9ba633913cc6431c2e',1,'ModbusClientApplication']]],
+  ['rear_7',['rear',['../class_pneumatic_controller.html#a880c5b672dc29e90163079b573da6033a5b89d42f026f3543e3cce15493dcc3cc',1,'PneumaticController']]],
+  ['rear_5fdrain_8',['rear_drain',['../class_pneumatic_controller.html#aa5814393451a0b10436b13669f8ba029ae415cff0d48e85c401ed303f66248642',1,'PneumaticController']]],
+  ['rear_5ffill_9',['rear_fill',['../class_pneumatic_controller.html#aa5814393451a0b10436b13669f8ba029a7118163440a3676a01d77da1e0856e6e',1,'PneumaticController']]],
+  ['reception_10',['reception',['../class_modbus_client.html#ae9d461d1c27fa29c5eddf8c85475995fa5f3565ed45b08f5d65e5e3e852f84955',1,'ModbusClient']]],
+  ['report_5fserver_5fid_11',['report_server_id',['../class_modbus_client_application.html#ab85e242e26c1f5977fc44e4d3933991caf7c627ec8b7457bfdf05647029a279a3',1,'ModbusClientApplication']]],
+  ['response_5ftimeout_5ferror_12',['RESPONSE_TIMEOUT_ERROR',['../class_transaction.html#a29a8b5507ace357a173f4eea3e5455b4ad2720170e4f3370c6d6fed044e123471',1,'Transaction']]],
+  ['return_5fbus_5fmessage_5fcount_13',['return_bus_message_count',['../class_modbus_client.html#a0df21f8bab1b27882ead8366ee0280d1a15410c6bb5f48ba8bfc1d36ac3375fda',1,'ModbusClient']]],
+  ['return_5fserver_5fbusy_5fcount_14',['return_server_busy_count',['../class_modbus_client.html#a0df21f8bab1b27882ead8366ee0280d1a349fd836d7f8cf6e921d7de9b914e596',1,'ModbusClient']]],
+  ['return_5fserver_5fexception_5ferror_5fcount_15',['return_server_exception_error_count',['../class_modbus_client.html#a0df21f8bab1b27882ead8366ee0280d1a857b9341cd5a6820cc06b00ecbe2a30a',1,'ModbusClient']]],
+  ['return_5fserver_5fnak_5fcount_16',['return_server_NAK_count',['../class_modbus_client.html#a0df21f8bab1b27882ead8366ee0280d1a74440347966c1a08a57c34584bc6a281',1,'ModbusClient']]],
+  ['return_5fserver_5fno_5fresponse_5fcount_17',['return_server_no_response_count',['../class_modbus_client.html#a0df21f8bab1b27882ead8366ee0280d1af6c2f8550b8c048c58e1085cce202071',1,'ModbusClient']]]
+];

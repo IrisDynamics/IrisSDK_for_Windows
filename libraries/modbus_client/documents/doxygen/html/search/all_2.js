@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['callbcounter_0',['callBCounter',['../classwindows___modbus_client.html#a06862f4fbcbf03d9f111f34fd63f2224',1,'windows_ModbusClient']]],
+  ['change_5fconnection_5fstatus_1',['change_connection_status',['../class_iris_client_application.html#a43f218bc5d2240d168955672fde7f951a7830453fcc9081a1301d81f7f90a9752',1,'IrisClientApplication']]],
+  ['channel_5fnumber_2',['channel_number',['../classqt___modbus_client.html#af0b3e9a682d055fcf97ed2f788ee203f',1,'qt_ModbusClient::channel_number()'],['../classwindows___modbus_client.html#a3ae859745ff818779d2f9332279aacd0',1,'windows_ModbusClient::channel_number()'],['../class_modbus_client.html#a941c6654dc2d8e9f18295110607d6c6d',1,'ModbusClient::channel_number()'],['../class_actuator.html#aca77940de939d6cce23dde83aa888c86',1,'Actuator::channel_number()']]],
+  ['character_5ftimeout_3',['CHARACTER_TIMEOUT',['../zynq7000__modbus__client_8h.html#a1a0d02720495a6e3c23879a268eea8d2',1,'zynq7000_modbus_client.h']]],
+  ['check_5frx_5fbuffer_5fcrc_4',['check_rx_buffer_crc',['../class_transaction.html#ac2cfc6486a678e03ed9d9ff2c5443710',1,'Transaction']]],
+  ['clear_5ferror_5fmask_5',['CLEAR_ERROR_MASK',['../actuator__config_8h.html#aca26d657d286593897580ca3d5e52a35',1,'actuator_config.h']]],
+  ['clear_5ferror_5freg_5foffset_6',['CLEAR_ERROR_REG_OFFSET',['../actuator__config_8h.html#a8fd7f51e6ecb9ec00b9c95de680bc293',1,'actuator_config.h']]],
+  ['clear_5ferrors_7',['clear_errors',['../class_actuator.html#a06d1fa407159a1cd596f801bddc83426',1,'Actuator']]],
+  ['communicationmode_8',['CommunicationMode',['../class_actuator.html#aa52acac67912944c82c617a31d768128',1,'Actuator']]],
+  ['connected_9',['connected',['../class_iris_client_application.html#af82284bc5ba9e52fdebf14b7fb237c22a4f49cb41ea13d413760769c7071ba07b',1,'IrisClientApplication']]],
+  ['connection_5fconfig_10',['connection_config',['../class_iris_client_application.html#aff604a58fc9e3b9a77e6ab41592d40e8',1,'IrisClientApplication']]],
+  ['connection_5ffunction_5fcodes_5fe_11',['connection_function_codes_e',['../class_iris_client_application.html#a43f218bc5d2240d168955672fde7f951',1,'IrisClientApplication']]],
+  ['connection_5fstate_12',['connection_state',['../class_iris_client_application.html#aaa5a0f8503702dd8d9904860d7a975b2',1,'IrisClientApplication']]],
+  ['connectionconfig_13',['ConnectionConfig',['../struct_iris_client_application_1_1_connection_config.html',1,'IrisClientApplication']]],
+  ['connectionstatus_14',['ConnectionStatus',['../class_iris_client_application.html#af82284bc5ba9e52fdebf14b7fb237c22',1,'IrisClientApplication']]],
+  ['control_5fsolenoid_15',['control_solenoid',['../class_pneumatic_controller.html#a27fc44c616de8834e5a5ab21c27672c7',1,'PneumaticController']]],
+  ['crc_5ferror_16',['CRC_ERROR',['../class_transaction.html#a29a8b5507ace357a173f4eea3e5455b4a6d2ab95fcc86378ff22086dc71f89542',1,'Transaction']]],
+  ['crc_5ferror_5fcount_17',['crc_error_count',['../class_modbus_client.html#a0df21f8bab1b27882ead8366ee0280d1aa00e21567921a3f6cf0547f4c3dbe23c',1,'ModbusClient']]],
+  ['cur_5fconsec_5ffailed_5fmsgs_18',['cur_consec_failed_msgs',['../class_iris_client_application.html#a2fcf031bff1309c038d39b3bea0b4de5',1,'IrisClientApplication']]],
+  ['cycles_5fper_5fmicro_19',['CYCLES_PER_MICRO',['../modbus__client__k20_8h.html#af840405ebbf8ebc80f527b34762dd3ad',1,'modbus_client_k20.h']]],
+  ['cycles_5fper_5fus_20',['cycles_per_us',['../classqt___modbus_client.html#acfdf857eb661159015e90c0d1cebe685',1,'qt_ModbusClient::cycles_per_us()'],['../classwindows___modbus_client.html#a05e292fad14c26dbdc62436116210b35',1,'windows_ModbusClient::cycles_per_us()'],['../class_iris_client_application.html#a28d1cc5686b74f8dd160f9e08f3ff688',1,'IrisClientApplication::cycles_per_us()']]]
+];

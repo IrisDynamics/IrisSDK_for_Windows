@@ -1,0 +1,4 @@
+<map id="actuator.h" name="actuator.h">
+<area shape="rect" id="node1" title="Actuator object that abstracts the use of the modbus library/communications." alt="" coords="42,5,122,32"/>
+<area shape="rect" id="node2" href="$pneumatic__controller_8h.html" title="Pneumatic Controller object that abstracts the use of the modbus library/ communication with an Pneum..." alt="" coords="5,80,159,107"/>
+</map>

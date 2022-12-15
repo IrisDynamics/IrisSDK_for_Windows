@@ -1,0 +1,9 @@
+<map id="Actuator" name="Actuator">
+<area shape="rect" id="node1" title="Object that abstracts the communications between the client and a Orca motor server." alt="" coords="1019,87,1089,113"/>
+<area shape="rect" id="node2" href="$class_iris_client_application.html" title="Establishes a Modbus connection status between a client and server device." alt="" coords="833,87,969,113"/>
+<area shape="rect" id="node3" href="$class_modbus_client_application.html" title="Base implementation of a Modbus client application layer." alt="" coords="511,60,676,87"/>
+<area shape="rect" id="node4" href="$class_transaction.html" title="MODBUS RTU frame object for outgoing and respective incoming requests." alt="" coords="238,11,327,37"/>
+<area shape="rect" id="node5" href="$class_modbus_client.html" title="Modbus client serial communication virtual class. To be implemented by device drivers." alt="" coords="232,80,333,107"/>
+<area shape="rect" id="node6" href="$class_message_queue.html" title="An array implemented queue of MODBUS RTU frame objects for sequential transmittion of commands to rem..." alt="" coords="5,80,119,107"/>
+<area shape="rect" id="node7" href="$struct_iris_client_application_1_1_connection_config.html" title="Configurable parameters for the handshake sequence and connection maintenance. Should be set when dis..." alt="" coords="525,174,661,215"/>
+</map>

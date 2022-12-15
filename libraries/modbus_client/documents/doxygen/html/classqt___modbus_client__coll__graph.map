@@ -1,0 +1,6 @@
+<map id="qt_ModbusClient" name="qt_ModbusClient">
+<area shape="rect" id="node1" title=" " alt="" coords="5,171,124,197"/>
+<area shape="rect" id="node2" title=" " alt="" coords="13,95,84,121"/>
+<area shape="rect" id="node3" href="$class_modbus_client.html" title="Modbus client serial communication virtual class. To be implemented by device drivers." alt="" coords="109,95,210,121"/>
+<area shape="rect" id="node4" href="$class_message_queue.html" title="An array implemented queue of MODBUS RTU frame objects for sequential transmittion of commands to rem..." alt="" coords="103,5,216,32"/>
+</map>

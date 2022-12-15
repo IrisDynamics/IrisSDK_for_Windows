@@ -1,0 +1,5 @@
+<map id="Actuator" name="Actuator">
+<area shape="rect" id="node1" title="Object that abstracts the communications between the client and a Orca motor server." alt="" coords="53,155,123,181"/>
+<area shape="rect" id="node2" href="$class_iris_client_application.html" title="Establishes a Modbus connection status between a client and server device." alt="" coords="20,80,156,107"/>
+<area shape="rect" id="node3" href="$class_modbus_client_application.html" title="Base implementation of a Modbus client application layer." alt="" coords="5,5,171,32"/>
+</map>
