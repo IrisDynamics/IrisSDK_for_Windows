@@ -1,4 +1,4 @@
-# IrisControls Source
+# Iris SDK for Windows
 ## WARNING!! 
 Be aware that the shaft or motor will move during operation. Position your hands and other sensitive assets accordingly. 
 This firmware will cause the motor to create forces and motion. Be very careful at all times. Ensure the shaft and motor are mounted in a safe location and not in danger of hitting people or property.
