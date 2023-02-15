@@ -10,3 +10,5 @@ This will also let you do force control of the motor, providing different signal
 
 
 
+Before running these examples ensure that the virtual com port has been set up and that the latency for the RS422 com port is set to 1 ms (see QuickStart guide for detailed instructions)
+
