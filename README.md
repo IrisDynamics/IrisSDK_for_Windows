@@ -31,7 +31,7 @@ We recommend you begin by following instructions in the Quickstart Guide.
 If you do not have GIT Bash on your machine, download and install it from https://git-scm.com/downloads 
 Right click in the directory you would like to clone this repository into and select 'Git Bash Here'/ 
 To clone this repo with all of the inlcuded submodules type the git bash command: 
-<code>git clone https://github.com/IrisDynamics/IrisSDK_for_Windows_dev</code>
+<code>git clone https://github.com/IrisDynamics/IrisSDK_for_Windows</code>
 
 
 ## Good Luck!
