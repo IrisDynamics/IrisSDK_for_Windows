@@ -48,7 +48,8 @@
 #include <string>
 
 #define MAX_COMMAND_LENGTH		100
-#define MAX_ARGUEMENT_LENGTH	100
+#define MAX_ARGUMENT_LENGTH		100
+#define MAX_VAR_STR_LENGTH		32
 
 #define MAX_HANDSHAKE_LENGTH	200
 
@@ -67,7 +68,8 @@
 #define PRINTDL(__ARG1__,__ARG2__) {PRINT(__ARG1__);PRINTD(__ARG2__);PRINTL(".");}
 
 /**
- * @brief a virtual object which takes care of buffering and parsing IrisControls4 traffic 
+ * @class IrisControls4
+ * @brief A virtual object which takes care of buffering and parsing IrisControls4 traffic.
  * 
  * Typical usage: 
  *	call check() once per GUI frame 
@@ -78,26 +80,59 @@
 class IrisControls4 {
 
 	// static storage for the command and arguement stripped from the incoming data buffer
-	char command[MAX_COMMAND_LENGTH];			// storage for the command part of a received message
-	char argument[MAX_ARGUEMENT_LENGTH];
+	char command[MAX_COMMAND_LENGTH];			// storage for the command part of a received message - todo: make this an int and modify get_message to return the mesage id instead of a command string
+	char argument[MAX_ARGUMENT_LENGTH];
 
 public:
+	char var_to_str_array[MAX_VAR_STR_LENGTH];	// storage used when converting variables to strings
 
 	int disable = 0;
 
 	//////////////////////////////////////////// CONNECTION /////////////////////////////////////////////
-	void set_server_name 	( const char * name_string ) { server_name 	= name_string; 	}
 
 	/**
-	 * @brief Transmits buffered data, and parses received messages
+	* @brief Sets the device ID.
+	* @param[in] const char* did_string - The ID.
+	* 
+	* The device ID appears in the IrisControls4 COM select menu.
+	*/
+	void set_device_id(const char* did_string) {
+		device_id		= did_string;	
+	}
+
+	/**
+	* @brief Sets the server name.
+	* @param[in] const char* name_string - The name.
+	*/
+	void set_server_name(const char* name_string) {
+		server_name	= name_string;	
+	}
+
+	/**
+	 * @brief Transmits buffered data, and parses received messages.
 	 *
-	 * This function should be called once during execution of a GUI frame
+	 * This function should be called once during execution of a GUI frame.
 	 */
 	int check();
 
+
+	/**
+	* @brief determines if a full messages has been received in the receive buffer.
+	* @param[in] u32& start	- The starting position in the circular buffer. 
+	* @param[in] u32& end		- The ending position in the circular buffer. 
+	* @param[out] int ret		- Returns 1 if a full message was found, otherwise 0.
+	* 
+	* @note 
+	* This function is called as the check() function is looping through the bytes in the receive buffer between the start_index and end_index.
+	* This function checks if the bytes between start and end make a full message, based on the command id. If they do, then start is moved to one index past the end position and true is returned.
+	*/
+	//int check_for_full_message(u32& start, u32& end);
+	int check_for_full_message(u32& start);
+
+
 	/**
 	 * @brief Platform-defined function that starts transmission which moves data from the software buffer to the hardware transmitter
-	 *
+	 * @note
 	 * The implementation should check the size of the transmit_buffer, and when it contains data, it should start transmitting it to IC4.
 	 * In the case that the platform uses a UART to communicate, it should fill the UART hardware fifo from the transmit_buffer, and enable interrupts.
 	 * The interrupt routine should continue to send characters from the transmit_buffer to the UART until all characters are transmitted.
@@ -144,18 +179,28 @@ public:
 		return ret;
 	}
 
-	// Can be used to reset the timeout counter
+	/**
+	* @brief Resets the timeout timer for the IC4 connection.
+	* 
+	* Called when enqueuing an EOT into the TX buffer.
+	*/
 	void refresh_timeout(){		
 		time_last_message = system_time();		
 	}
 
 	/**
-	 * @brief Console object created so that the console can be manipulated using FlexElement methods (move, hide, resize, etc...)
+	 * @brief Console object created so that it can be manipulated using FlexElement methods (move, hide, resize, etc...).
 	 */
 	Console console;
 
-	int 	parse_int 		( char * input, unsigned int & index );  // returns number of bytes read
-	double 	parse_double 	( char * input, unsigned int & index );
+	int 	pop_int 		();
+	double	pop_double		();
+	bool	pop_bool		();
+
+	int 			parse_int 		();
+	int				parse_int		(char* input , unsigned int& index  );
+	virtual double 	parse_double	();
+	double 			parse_double	(char * input, unsigned int & index );
 
 	///////////////////////////////////////// General GUI Implementation //////////////////////////////////
 	void gui_set_grid			(u16 num_rows, u16 num_columns);
@@ -166,18 +211,25 @@ public:
 	void set_main_window_title	(const char *);
 
 	/**
-	 * @brief Loads a configuration file via console commands
+	 * @brief Loads a configuration file via console commands.
+	 * @param[in] const char* filename - The filename of the config file to load.
+	 * 
+	 * Note: The config file must be in the config_files directory of the IrisControls4.exe location.
 	 */
 	void load_config_file(const char * filename);
 
 	/**
-	 * @brief Assigns a keyboard shortcut to key 'key' which activates the element with the id 'target'
-	 * - For a list of keys: https://doc.qt.io/qt-5/qt.html#Key-enum
+	 * @brief Assigns a keyboard shortcut to key 'key' which activates the element with the id 'target'.
+	 * @param[in] int key		- The key which will activate the shortcut.
+	 * @param[in] int target	- The element ID that will report "pressed" when the shortcut key is pressed.
+	 * 
+	 * For a list of keys: https://doc.qt.io/qt-5/qt.html#Key-enum
 	 */
 	void assign_keyboard_shortcut(int key, int target);
 
 	/**
 	 * @brief Functions that return the maximum allowable rows and columns for a GUI.
+	 * @param[out] The maximum allowable rows/columns.
 	 *
 	 * May only be called after calling:    IC4_virtual->gui_query_max_grid();
 	 *
@@ -207,8 +259,10 @@ public:
 	}
 
 	/**
-	 * @brief print a single character to the tx buffer
-	 * If the FLAG or ESC char is detected, inject an ESC char into the tx buffer before sending (byte stuffing)
+	 * @brief print a single character to the tx buffer.
+	 * @param[in] char c - The char.
+	 * 
+	 * If the FLAG or ESC char is detected, inject an ESC char into the tx buffer before sending (byte stuffing).
 	 */
 	void print_c(char c) {
 		#ifdef BYTE_STUFFING_PARSING
@@ -224,6 +278,7 @@ public:
 	* Will display in the console of IrisControls.
 	*/
 	void print_l(const char* s) {
+
 #ifdef MESSAGE_LENGTH_PARSING
 		begin_tx_frame(size_of_string(s));
 #elif defined(BYTE_STUFFING_PARSING)
@@ -268,31 +323,28 @@ public:
 
 	/**
 	 * @brief Platform-defined function which returns the system time in microseconds
-	 *
-	 * @return system time in microseconds
+	 * @param[out] system time in microseconds
 	 */
 	virtual u64 system_time() = 0;
 
+	/**
+	* @brief Flushes the TX buffer by calling send until it is empty.
+	*/
 	void flush() {
 		while( transmit_buffer.size()) {
 			send();
 		}
 	}
 
+	/**
+	* @brief Flushes the TX buffer by calling send until it reaches a threshold value.
+	* @param[in] u32 threshold - The threshold value in bytes.
+	*/
 	void flush(u32 threshold) {
 		while( transmit_buffer.size() > threshold) {
 			send();
 		}
 	}
-
-	/*
-	 * @brief Checks value of all active elements (active elements are those that have had their
-	 * "add" commands called and therefore they exist in Iris Controls. Those values are used to
-	 * compute a CRC which is transmitted to Iris Controls for comparison. )
-	 */
-	void device_state_check();
-
-
 
 protected:
 	volatile u32 time_last_message = 0;
@@ -306,6 +358,8 @@ protected:
 	friend class C_FlexLabel;
 	friend class FlexData;
 	friend class Basic_FlexData;
+	friend class FlexDropdown;
+	friend class MenuOption;
 	friend class FlexPlot;
 	friend class Dataset;
 	friend class IO_thing;
@@ -348,7 +402,6 @@ protected:
 
 	void set_full_duplex 	() { communication_protocol = full_duplex; 				}
 	void set_half_duplex 	() { communication_protocol = half_duplex; 				}
-	void set_device_id 		( const char * did_string ) { device_id = did_string; 	}
 
 	enum CONNECTION_STATUS {
 		disconnected,
@@ -391,22 +444,24 @@ protected:
 	virtual void handle_eot() = 0;	
 
 	/**
-	 * @brief Writes a char to the transmit buffer checking for overflow
+	 * @brief Writes a char to the transmit buffer checking for overflow.
+	 * @param[in] char c - The char.
 	 */
 	void write_tx_buffer(char c);
 
 	/**
 	 * @brief platform must implement a response to an unidentified command.
 	 *
-	 * @param[in] cmd the command string in the message that caused the help to be called
-	 * @param[in] arg the argument string in the message that caused the help to be called
+	 * @param[in] char * cmd - The command string in the message that caused the help to be called.
+	 * @param[in] char * arg - The argument string in the message that caused the help to be called.
 	 */
-	virtual void print_help(char* cmd, char* arg) {
-		print_l("Unknown Message: "); print_l(cmd); print_l(arg); print_l("\r");
+	virtual void print_help(char* cmd) {
+		print_l("Unknown Command: "); print_l(cmd); print_l("\r");
 		print_l("Use command \"help\" for a list of allowable commands.\r");
 	}
 
 	/**
+
 * @brief print a formatted number to the tx buffer
 */
 	virtual const char* val_to_str(int d) = 0;
@@ -425,47 +480,59 @@ public:
 
 	virtual const char* val_to_str(float f) = 0;
 
+
 	/**
 	 * @brief Initiates a disconnect from Iris Controls
 	 */
 	void disconnect();
 
 	// Data inflow sequence: 
+	
 	// 1
 	void receive_char(char c);
+	
 	// 2
-	int get_message(char* command, char* argument);
+	int get_message(char* command);
+	
 	// 3 
-	int parse_message(char* cmd, char* arg);
+	int parse_message(char* cmd);
+	
 	// 4
-	int parseAPI( char * cmd, char * arg );
+	int parse_API();
+	
 	// 5
-	int parse_console_msg( char * cmd, char * arg);
-
-	/**
-	 * @brief an optional hardware specific parser that can be implemented by the device driver object
-	 */
-	virtual int parse_device_driver(char* cmd, char* arg) { return 0; }
-
 	/**
 	 * @brief an optional parser that can be implemented by the application layer
 	 */
-	virtual int parse_app( char * cmd, char * arg ) { return 0; }
+	virtual int parse_app(char* cmd) { return 0; }
+	virtual int parse_app(char* cmd, char* args) { return 0; } //deprecated function written here to prevent older firmware from malfunctioning
+
+	// 6
+	int parse_console_msg( char * cmd);
+		
+	// 7
+	/**
+	 * @brief an optional hardware specific parser that can be implemented by the device driver object
+	 */
+	virtual int parse_device_driver(char* cmd) { return 0; }
+
 
 	///////////////////////////////////////// Responses to incoming requests //////////////////////////////
 	void enquiryResponse();
 	void handshakeResponse(u64, uint8_t);
 
 	///////////////////////////////////////// GUI Thing Implementation //////////////////////////////////
-	void gui_thing_config		(u32 index, u16 config);
+	void gui_thing_config		(u32 index, u32 config);
 
 	///////////////////////////////////////// GUI Page Implementation //////////////////////////////////////
-	void gui_page_add			(u32 index);
+	void gui_page_add			(u32 index, u32 parent_index);
 	void gui_page_remove		(u32 index);
 	void gui_page_show			(u32 index);
 	void gui_page_hide			(u32 index);
 	void gui_page_add_element	(u32 index, u32 element_index);
 	void gui_page_remove_element(u32 index, u32 element_index);
+	void gui_page_add_page		(u32 index, u32 child_page_index);
+	void gui_page_remove_page	(u32 index, u32 child_page_index);
 
 	///////////////////////////////////////// Flex Element Implementation //////////////////////////////////
 	void flexElement_hide			(u32 index);
@@ -484,19 +551,24 @@ public:
 	void flexButton_add			(u32 parent_id, u32 index, const char* name, int initValue, u16 row, u16 column, u16 rowSpan, u16 columnSpan);
 	void flexButton_set_checked	(u32 index, int t);
 
-	////////////////////////////////////////////Flex Slider Implementation///////////////////////
-	void flexSlider_add						(u32 parent_id, u32 index, int total_factor, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, const char* units, u16 config);
+	////////////////////////////////////////////flex Slider Implementation///////////////////////
+	void flexSlider_add						(u32 parent_id, u32 index, int total_factor, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, const char* units, u32 config);
 	void flexSlider_update					(u32 index, float value);
 	void flexSlider_set_range				(u32 index, int min, int max);
 
-	////////////////////////////////////////////Flex Label Implementation///////////////////////
-	void flexLabel_add		(u32 parent_id, u32 index, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u16 config);
+	////////////////////////////////////////////flex Label Implementation///////////////////////
+	void flexLabel_add		(u32 parent_id, u32 index, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u32 config);
 
-	////////////////////////////////////////////Flex Data Implementation///////////////////////
-	void flexData_add		(u32 parent_id, u32 index, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, const char * units, int total_factor, u16 config);
+	////////////////////////////////////////////flex Data Implementation///////////////////////
+	void flexData_add		(u32 parent_id, u32 index, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, const char * units, int total_factor, u32 config);
+
+	////////////////////////////////////////////flex Dropdown Implementation///////////////////
+	void flexDropdown_add				(u32 parent_id, u32 index, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u32 config);
+	void flexDropdown_add_option		(u32 index, u32 option_id, const char* label);
+	void flexDropdown_remove_option		(u32 index, u32 option_id);
 
 	////////////////////////////////////////////Flex Plot Implementation///////////////////////
-	void flexPlot_add						(u32 parent_id, u32 index, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, float min, float max, u16 config);
+	void flexPlot_add						(u32 parent_id, u32 index, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, float min, float max, u32 config);
 	void flexPlot_set_range					(u32 index, int config, float min, float max);
 	void flexPlot_set_domain				(u32 index, float min, float max);
 	void flexPlot_set_domain				(u32 index, int domain);
@@ -504,11 +576,14 @@ public:
 	void flexPlot_set_axes_labels			(u32 flexplot_index, u32 dataset_index);
 
 	////////////////////////////////////////////Dataset Implementation///////////////////////
-	void dataset_add					(u32 dataset_id, u32 plot_id, const char* name, const char* _x_label, const char* _y_label, u16 config);
+	void dataset_add					(u32 dataset_id, u32 plot_id, const char* name, const char* _x_label, const char* _y_label, u32 config);
 	void dataset_set_max_data_points	(u32 index, u32 number_of_data_points);
 	void dataset_remove					(u32 index);
 	void dataset_add_float_data			(u32 index, u16 dataPairs, float xData[], float yData[]);
 	void dataset_add_int_data			(u32 index, int xData, int yData);
+#ifndef WINDOWS
+	void dataset_add_int_data			(u32 index, s32 xData, s32 yData);
+#endif
 	void dataset_add_int_data			(u32 index, u64 xData, int yData);
 	void dataset_hide					(u32 index);
 	void dataset_show					(u32 index);
@@ -520,6 +595,7 @@ public:
 	////////////////////////////////////////////Dataset Implementation///////////////////////
 	void datalog_add 					(u32 index, const char * name);
 	void datalog_write					(u32 index, const char * string);
+	void datalog_close					(u32 index);
 
 	///////////////////////////////////////// Style Implementation //////////////////////////////////
 	void reset_all_default_colours		();
@@ -578,10 +654,13 @@ private :
 	void tx_crc_result(int);
 
 	/**
-	* @brief print a formatted string to the tx buffer
-	* Used by the methods in serialAPI.h to transmit strings terminated by the END_OF_STRING char
+	* @brief Prints a formatted string to the tx buffer.
+	* @param[in] const char* s - The char.
+	* 
+	* Used by the methods in serialAPI.h to transmit strings terminated by the END_OF_STRING char.
 	*/
 	void print_s(const char* s) {
+			
 		u8 c = s[0];
 		u16 i = 0;
 
@@ -594,8 +673,10 @@ private :
 	}
 
 	/**
-	 * @brief print a formatted int to the tx buffer
-	 * Used by the methods in serialAPI.h to transmit integers broken up into four 1 byte words
+	 * @brief Prints a formatted int to the tx buffer.
+	 * @param[in] int d - The int.
+	 * 
+	 * Used by the methods in serialAPI.h to transmit integers broken up into four 1 byte words.
 	 */
 	void print_i(int d) {
 		u8 the_int[4];
@@ -614,8 +695,10 @@ private :
 #endif 	
 
 	/**
-	 * @brief print a formatted unsigned int to the tx buffer
-	 * Used by the methods in serialAPI.h to transmit unsigned ints broken up into four 1 byte words
+	 * @brief Prints a formatted unsigned int to the tx buffer.
+	 * @param[in] unsigned int d - The unsigned int.
+	 * 
+	 * Used by the methods in serialAPI.h to transmit unsigned ints broken up into four 1 byte words.
 	 */
 	void print_i(unsigned int d) {
 		u8 the_int[4];
@@ -635,8 +718,10 @@ private :
 
 	
 	/**
-	 * @brief print a formatted u16 to the tx buffer
-	 * Used by the methods in serialAPI.h to transmit u16 integers broken up into two 1 byte words
+	 * @brief Prints a formatted u16 to the tx buffer.
+	 * @param[in] u16 d - The u16.
+	 * 
+	 * Used by the methods in serialAPI.h to transmit u16 integers broken up into two 1 byte words.
 	 */
 	void print_i(u16 d) {
 		u8 the_u16[2];
@@ -651,8 +736,10 @@ private :
 	void print_i(u8  d) { print_i((u16)d); 			}
 
 	/**
-	 * @brief print a formatted u64 to the tx buffer
-	 * Used by the methods in serialAPI.h to transmit u64 integers broken up into eight 1 byte words
+	 * @brief Prints a formatted u64 to the tx buffer.
+	 * @param[in] u64 d - The u64.
+	 * 
+	 * Used by the methods in serialAPI.h to transmit u64 integers broken up into eight 1 byte words.
 	 */
 	void print_i(u64 d)  {
 
@@ -673,8 +760,10 @@ private :
 	}
 
 	/**
-	 * @brief print a formatted float to the tx buffer
-	 * Used by the methods in serialAPI.h to transmit floats broken up into 1 byte words
+	 * @brief Prints a formatted float to the tx buffer.
+	 * @param[in] float f - The float.
+	 * 
+	 * Used by the methods in serialAPI.h to transmit floats broken up into 1 byte words.
 	 */
 	void print_i(float f) {
 		const u8 size = 4;	//number of bytes the float occupies	
@@ -685,6 +774,8 @@ private :
 			print_c(the_float[i]);
 		}
 	}
+
+
 
 	/**
 	 * @brief Prepends an outgoing serial message with the message frame
@@ -708,7 +799,8 @@ private :
 
 #ifdef MESSAGE_LENGTH_PARSING
 	/**
-	 * @brief Calculates the size of the string
+	 * @brief Calculates the size of the string.
+	 * @param[in] const char* msg - The string.
 	 */
 	u16 size_of_string(const char* msg){
 		u16 the_size = 0;

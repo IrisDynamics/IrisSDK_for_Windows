@@ -21,12 +21,14 @@
 #pragma once
 
 #include "config.h"		// note: this must be implemented by the platform
+#include "API_Config.h"
 
 
 /**
- * @brief a ring buffer, having a size that is a power of two (the template argument is that power of two).
- *
- */
+* @class CircularBuffer
+* @brief A ring buffer, having a size that is a power of two (the template argument is that power of two).
+*
+*/
 template< int buffer_bits >
 class CircularBuffer {
 public:
@@ -46,16 +48,18 @@ public:
 
 
 	/**
-	 * @brief add a single character to the buffer
-	 */
-	void printchar( char s ) {
+	* @brief Add a single character to the buffer.
+	* @param[in] char s - The char to add.
+	*/
+	void printchar(char s) {
 
 		d[end_index & mask] = s;
 		end_index++;
 	}
 
 	/**
-	* @brief pull a single character off the buffer 
+	* @brief Pull a single character off the buffer.
+	* @return char - The char from the buffer.
 	* 
 	* This function assumes size() is greater than zero. Unexpected results occur when called while size is zero. 
 	*/
@@ -66,9 +70,57 @@ public:
 		return ret; 
 	}
 
+	/**
+	* @brief Resets the start and end index of the circular buffer, clearing it.	
+	*/
 	void clear() {
 		start_index = 0;
 		end_index 	= 0;
+	}
+
+	/**
+	* @brief Makes sure that any junk bytes are cleared from the buffer.
+	* @return int - The number of bytes that had to be popped off.
+	* 
+	* @note
+	* Called after an attempt to parse a console message. To ensure that the console message
+	* parsing was complete and there are no stray chars left on the buffer before the next message.
+	*/
+	int recover() {
+
+		int bytes_to_pop = bytes_to_trailer();
+
+		for (int i = 0; i < bytes_to_pop; i++) popchar(); //pop any remaining payload
+
+		popchar(); //pop TRAILER
+		popchar(); //pop FLAG
+							
+		return bytes_to_pop;
+	}
+
+	/**
+	* @brief Checks how many bytes remain in the buffer before the next trailer.
+	* @return int - The number of bytes.
+	* 
+	* @note
+	* Used by parse_int and parse_double to make sure enough data remains on the RX buffer
+	* when parsing arguments out of console commands.
+	*
+	* If there is no trailer, will return the size of the buffer.
+	*/
+	int bytes_to_trailer() {
+
+		u32 start = start_index;
+
+		while (start != end_index) {
+			if  (	d[start			& mask]	== TRAILER 
+				&&	d[(start + 1)	& mask]	== FLAG
+				)
+			{ break; }
+			start++;
+		}
+
+		return start - start_index;
 	}
 
 };

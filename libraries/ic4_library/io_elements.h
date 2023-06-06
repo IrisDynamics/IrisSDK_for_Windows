@@ -2,7 +2,7 @@
  * @file io_elements.h
  * @author Dan Beddoes <dbeddoes@irisdynamics.com>
  * @version 2.2.0
- *	@brief Contains class definitions of GUI objects.
+ * @brief Contains class definitions of GUI objects.
     
 	@copyright Copyright 2022 Iris Dynamics Ltd 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,10 @@ class FlexButton;
 class FlexSlider;
 class FlexLabel;
 class FlexPlot;
+class FlexDropdown;
+class MenuOption;
 class Dataset;
+class DataLog;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41,9 +44,13 @@ class Dataset;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * The iris controls console. Displays messages to the user and accepts text commands.
- * Includes the COM channel selector for connecting to devices.
- */
+* @class Console
+* @brief The iris Controls console. 
+* 
+* @note
+* Displays messages to the user and accepts text commands.
+* Includes the COM channel selector for connecting to devices.
+*/
 class Console {
 public:
 
@@ -109,8 +116,9 @@ public:
 };
 
 /**
- * Abstract class that contains data and functions that are common across all GUI elements
- */
+* @class GUI_thing
+* @brief Abstract class that contains data and functions that are common across all GUI elements.
+*/
 class GUI_thing {
 
 public:
@@ -123,9 +131,9 @@ public:
 	virtual void show(){};
 	virtual void hide(){};
 
-	virtual void config(u16 config);
+	virtual void config(u32 config);
 
-	int id() {return index;} 
+	u32 id() { return index; } 
 
 	static int get_index_assigner(){
 		return index_assigner;
@@ -134,7 +142,7 @@ public:
 protected:
 
 	/**
-	 * @brief update the slider value and return one if the updated value differs from the old value
+	 * @brief update the element value and return one if the updated value differs from the old value
 	 */
 	int set	( int v ) 	{
 
@@ -157,8 +165,9 @@ private:
 
 
 /**
- * New type of GUI element on a grid
- */
+* @class FlexElement
+* @brief New type of GUI element on a grid.
+*/
 class FlexElement: public GUI_thing{
 public:
 
@@ -168,6 +177,8 @@ public:
 		FLEXLABEL		= 2,
 		FLEXDATA		= 3,
 		FLEXPLOT		= 4,
+		FLEXDROPDOWN	= 5,
+		CONSOLE			= 6,
 	};
 
 	typedef enum SUBELEMENT_TYPE {
@@ -194,10 +205,13 @@ public:
 	#define ELEMENT_TOGGLED_MASK	(1 << 2)
 
 /**
- * @brief Abstract class that further extends a FlexElement. These things have input and output functionality.
- * They need to be registered in the IO_register so that serial parser
- * can correctly assign any user changes coming from the GUI
- */
+* @class IO_thing
+* @brief Abstract class that further extends a FlexElement. These things have input and/or output functionality.
+* 
+* @note 
+* They need to be registered in the IO_register so that serial parser 
+* can correctly assign any user changes coming from the GUI.
+*/
 class IO_thing : public FlexElement {
 	friend class IO_registry;
 
@@ -236,7 +250,6 @@ protected:
 	void update_received(); // Called when an element update has been received by the user to reset the flag
 
 	IO_thing * next			= 0; // used by the IO_registry to maintain a linked list
-	IO_thing * next_active	= 0; 
 
 	/** 
 	* @var u8 feedback_register
@@ -249,9 +262,12 @@ protected:
 };
 
 /**
- * @brief Abstract class that further extends a Basic_IO_thing.
- * These things can have denominators and unit conversion factors.
- */
+* @class Complex_IO_thing
+* @brief Abstract class that further extends a Basic_IO_thing.
+* 
+* @note
+* These things can have denominators and unit conversion factors.
+*/
 class Complex_IO_thing : public IO_thing {
 public:
 
@@ -263,7 +279,7 @@ public:
 	Complex_IO_thing ();
 	virtual ~Complex_IO_thing ();
 
-	void config(u16 config);
+	void config(u32 config);
 
 	int 	get 	();
 	float 	get_f 	();
@@ -309,9 +325,12 @@ public:
 };
 
 /**
- * Static linked list of all IO_things. This is used by the USB parser to deliver IO updates
- * from the GUI to the elements
- */
+* @class IO_registry
+* @brief Static linked list of all IO_things. 
+* 
+* @note
+* This is used by the USB parser to deliver IO updates from the GUI to the elements.
+*/
 class IO_registry {
 public:
 
@@ -322,25 +341,21 @@ public:
 	static u32 errors;
 
     static void add 		(IO_thing * new_io);
-    static void activate	(IO_thing * active_io);
     static int remove 		(IO_thing * to_remove);
-    static int deactivate 	(IO_thing * to_deactivate);
-    static int set 			(int id, int value);
-    static int set 			(int id, float value);
-    static int set_element_pressed 	(int id);	// indicate a user has pressed this element
-    static IO_thing * get	(int id);
-    static IO_thing * get_active_list() { return active_element_list; }
-    static void reset_active_list();
+    static int set 			(u32 id, int value);
+    static int set 			(u32 id, float value);
+    static int set_element_pressed 	(u32 id);	// indicate a user has pressed this element
+    static IO_thing * get	(u32 id);
 
 private:
 	static IO_thing * list;
-	static IO_thing * active_element_list;
 };
 
 /**
 * @class GUI_Page
 * @brief Class that organises collections of FlexElements into pages
 * 
+* @note
 * The application maintains a list of all FlexElements added to the GUI_page. 
 * Calling show or hide methods will result in a single serial command being issued that replaces calling
 * show or hide for every element the GUI_page contains.
@@ -353,10 +368,14 @@ public:
 	~GUI_Page();
 
 	void add	();
+	void add	(GUI_Page* parent_gui_page);
 	void remove	();
 	
 	void add_element	(FlexElement* flex_element);
 	void remove_element	(FlexElement* flex_element);
+
+	void add_page		(GUI_Page* page);
+	void remove_page	(GUI_Page* page);
 	
 	void show();
 	void hide();
@@ -369,9 +388,12 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief An IO element Push Button.
- * Can be configured to be disabled, pressable, or pressable and toggleable.
- */
+* @class FlexButton
+* @brief An IO element Push Button.
+* 
+* @note
+* Can be configured to be disabled, pressable, or pressable and toggleable.
+*/
 class FlexButton: public IO_thing{
 public:
 
@@ -411,13 +433,16 @@ public:
 };
 
 /**
- * @brief A Slider IO element with digital value display.
- * Can be configured to be output only, or act as an input element where users may drag the slider or
- * type values into the value field.
- * Can be configured to display units.
- * Can be configured to handle unit conversions automatically and display up to 7 decimal places.
- * Can be configured to be mirrored horizontally.
- */
+* @class FlexSlider
+* @brief A Slider IO element with digital value display.
+* 
+* @note
+* Can be configured to be output only, or act as an input element where users may drag the slider or
+* type values into the value field.
+* Can be configured to display units.
+* Can be configured to handle unit conversions automatically and display up to 7 decimal places.
+* Can be configured to be mirrored horizontally.
+*/
 class FlexSlider: public Complex_IO_thing{
 public:
 
@@ -443,17 +468,17 @@ public:
 	FlexSlider();
 	~FlexSlider();
 
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, u16 config = 0);
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, const char* units, u16 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, u32 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, const char* units, u32 config = 0);
 
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double min, double max, double initValue, u16 denominator, u16 config = 0);
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double min, double max, double initValue, u16 denominator, const char* units, u16 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double min, double max, double initValue, u16 denominator, u32 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double min, double max, double initValue, u16 denominator, const char* units, u32 config = 0);
 
-	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, u16 config = 0);
-	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, const char * units, u16 config = 0);
+	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, u32 config = 0);
+	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, const char * units, u32 config = 0);
 
-	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double min, double max, double initValue, u16 denominator, u16 config = 0);
-	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double min, double max, double initValue, u16 denominator, const char * units, u16 config = 0);
+	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double min, double max, double initValue, u16 denominator, u32 config = 0);
+	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double min, double max, double initValue, u16 denominator, const char * units, u32 config = 0);
 
 	int   update(int value);
 	float update(float value);
@@ -507,12 +532,25 @@ public:
 		BINARY				= 0b01 << 11,
 		HEXADECIMAL			= 0b10 << 11,
 		UNSIGNED_DECIMAL	= 0b11 << 11,
+
+		//LABEL_ALIGN_LEFT	= 0b01 << 14,
+		//LABEL_ALIGN_CENTER= 0b10 << 14,
+		//LABEL_ALIGN_RIGHT	= 0b11 << 14,
+		
+		VALUE_ALIGN_LEFT	= 0b01 << 16,
+		VALUE_ALIGN_CENTER	= 0b10 << 16,
+		VALUE_ALIGN_RIGHT	= 0b11 << 16,
+
+		//UNITS_ALIGN_LEFT	= 0b01 << 18,
+		//UNITS_ALIGN_CENTER= 0b10 << 18,
+		//UNITS_ALIGN_RIGHT	= 0b11 << 18,
 	};
 };
 
 /**
- * @brief A Basic FlexSlider without support for decimals or unit conversion denominators.
- */
+* @class Basic_FlexSlider
+* @brief A Basic FlexSlider without support for decimals or unit conversion denominators.
+*/
 class Basic_FlexSlider: public IO_thing{
 public:
 
@@ -538,11 +576,11 @@ public:
 	Basic_FlexSlider();
 	~Basic_FlexSlider();
 
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, u16 config = 0);
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, const char* units, u16 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, u32 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, const char* units, u32 config = 0);
 
-	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, u16 config = 0);
-	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, const char * units, u16 config = 0);
+	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, u32 config = 0);
+	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, u16 denominator, const char * units, u32 config = 0);
 
 	int update(int value);
 	int update(u16 value) { return update((int)value); }
@@ -586,12 +624,25 @@ public:
 		BINARY				= 0b01 << 11,
 		HEXADECIMAL			= 0b10 << 11,
 		UNSIGNED_DECIMAL	= 0b11 << 11,
+				
+		//LABEL_ALIGN_LEFT	= 0b01 << 14,
+		//LABEL_ALIGN_CENTER= 0b10 << 14,
+		//LABEL_ALIGN_RIGHT	= 0b11 << 14,
+		
+		VALUE_ALIGN_LEFT	= 0b01 << 16,
+		VALUE_ALIGN_CENTER	= 0b10 << 16,
+		VALUE_ALIGN_RIGHT	= 0b11 << 16,
+
+		//UNITS_ALIGN_LEFT	= 0b01 << 18,
+		//UNITS_ALIGN_CENTER= 0b10 << 18,
+		//UNITS_ALIGN_RIGHT	= 0b11 << 18,
 	};
 };
 
 /**
- * @brief A Basic text label
- */
+* @class FlexLabel
+* @brief A Basic text label.
+*/
 class FlexLabel: public FlexElement{
 public:
 
@@ -603,8 +654,8 @@ public:
 	FlexLabel();
 	~FlexLabel();
 
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u16 config = 0);
-	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u16 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u32 config = 0);
+	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u32 config = 0);
 
 	void font_size(u16 font_size);
 	void set_colour(colour_set_flag, u16 r, u16 g, u16 b, u16 a);
@@ -619,16 +670,17 @@ public:
 };
 
 /**
- * @brief A FlexLabel that reports user clicks to the device
- */
+* @class C_FlexLabel
+* @brief A FlexLabel that reports user clicks to the device.
+*/
 class C_FlexLabel: public IO_thing {
 public:
 
 	C_FlexLabel();
 	~C_FlexLabel();
 
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u16 config = 0);
-	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u16 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u32 config = 0);
+	void add(const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u32 config = 0);
 
 	void font_size(u16 font_size);
 	void set_colour(FlexLabel::colour_set_flag flag, u16 r, u16 g, u16 b, u16 a);
@@ -637,12 +689,15 @@ public:
 
 
 /**
- * @brief An IO element with digital data display.
- * Can be configured to be output only, or act as an input element where users may type values into the value field.
- * Can be configured to display units.
- * Can be configured to handle unit conversions automatically and display up to 7 decimal places.
- * Can be configured to be mirrored horizontally.
- */
+* @class FlexData
+* @brief An IO element with digital data display.
+* 
+* @note
+* Can be configured to be output only, or act as an input element where users may type values into the value field.
+* Can be configured to display units.
+* Can be configured to handle unit conversions automatically and display up to 7 decimal places.
+* Can be configured to be mirrored horizontally.
+*/
 class FlexData : public Complex_IO_thing{
 public:
 
@@ -658,17 +713,17 @@ public:
 	FlexData();
 	~FlexData();
 
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u16 denominator, u16 config = 0);
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u16 denominator, const char* units, u16 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u16 denominator, u32 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u16 denominator, const char* units, u32 config = 0);
 			 
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double initValue, u16 denominator, u16 config = 0);
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double initValue, u16 denominator, const char* units, u16 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double initValue, u16 denominator, u32 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double initValue, u16 denominator, const char* units, u32 config = 0);
 
-	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u16 denominator, u16 config = 0);
-	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u16 denominator, const char * units, u16 config = 0);
+	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u16 denominator, u32 config = 0);
+	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u16 denominator, const char * units, u32 config = 0);
 
-	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double initValue, u16 denominator, u16 config = 0);
-	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double initValue, u16 denominator, const char * units, u16 config = 0);
+	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double initValue, u16 denominator, u32 config = 0);
+	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, double initValue, u16 denominator, const char * units, u32 config = 0);
 
 	int   update(int value);
 	float update(float value);
@@ -721,28 +776,41 @@ public:
 		HEXADECIMAL			= 0b10 << 11,
 		UNSIGNED_DECIMAL	= 0b11 << 11,
 
-		VALUE_ALIGN_LEFT	= 1 << 13,
-		VALUE_ALIGN_CENTER	= 1 << 14,
+		VALUE_ALIGN_LEFT	= 0b01 << 13,
+		VALUE_ALIGN_CENTER	= 0b10 << 13,
+		VALUE_ALIGN_RIGHT	= 0b11 << 13,
+		
 		//WIDE VALUE		= 1 << 15
+
+		LABEL_ALIGN_LEFT	= 0b01 << 16,
+		LABEL_ALIGN_CENTER	= 0b10 << 16,
+		LABEL_ALIGN_RIGHT	= 0b11 << 16,
+
+		UNITS_ALIGN_LEFT	= 0b01 << 18,
+		UNITS_ALIGN_CENTER	= 0b10 << 18,
+		UNITS_ALIGN_RIGHT	= 0b11 << 18,
 	};
 };
 
 
 /**
- * @brief Lightweight FlexData without support for decimal places or denominators.
- * Therefore, can only accept whole integer values.
- */
+* @class Basic_FlexData
+* @brief Lightweight FlexData without support for decimal places or denominators.
+* 
+* @note
+* Can only accept whole integer values.
+*/
 class Basic_FlexData : public IO_thing{
 public:
 
 	Basic_FlexData();
 	~Basic_FlexData();
 
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u16 config = 0);
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, const char* units, u16 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u32 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, const char* units, u32 config = 0);
 
-	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u16 config = 0);
-	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, const char * units, u16 config = 0);
+	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, u32 config = 0);
+	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, const char * units, u32 config = 0);
 
 	int update(int value);
 	int update(u16 value) { return update((int)value); }
@@ -783,29 +851,94 @@ public:
 		HEXADECIMAL			= 0b10 << 11,
 		UNSIGNED_DECIMAL	= 0b11 << 11,
 
-		VALUE_ALIGN_LEFT	= 1 << 13,
-		VALUE_ALIGN_CENTER	= 1 << 14,
+		VALUE_ALIGN_LEFT	= 0b01 << 13,
+		VALUE_ALIGN_CENTER	= 0b10 << 13,
+		VALUE_ALIGN_RIGHT	= 0b11 << 13,
+		
 		//WIDE VALUE		= 1 << 15
+
+		LABEL_ALIGN_LEFT	= 0b01 << 16,
+		LABEL_ALIGN_CENTER	= 0b10 << 16,
+		LABEL_ALIGN_RIGHT	= 0b11 << 16,
+
+		UNITS_ALIGN_LEFT	= 0b01 << 18,
+		UNITS_ALIGN_CENTER	= 0b10 << 18,
+		UNITS_ALIGN_RIGHT	= 0b11 << 18,
 	};
+};
+
+/**
+* @class FlexDropdown
+* @brief A dropdown menu GUI element.
+* 
+* @note
+* Is filled with MenuOption objects
+*/
+class FlexDropdown : public IO_thing {
+
+public:
+
+	typedef enum COLOUR_SET_FLAG {
+		DROPDOWN_MENU_TEXT		= 1,
+		ACTIVE_OPTION_TEXT		= 2,
+	} colour_set_flag;
+
+	FlexDropdown();
+	~FlexDropdown();
+
+	void add(GUI_Page* parent, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u32 config = 0);
+	void add(u16 row, u16 column, u16 rowSpan, u16 columnSpan, u32 config = 0);
+
+	void set_menu_item(MenuOption* option);
+
+	void add_option(MenuOption* option, const char* label);
+	void remove_option(MenuOption* option);
+
+	void font_size(u16 font_size);
+
+	void set_colour(FlexDropdown::colour_set_flag flag, u16 r, u16 g, u16 b, u16 a);
+	void reset_this_flexdropdown_default_colours();
+
+	static void set_default_colour(colour_set_flag flag, u16 r, u16 g, u16 b, u16 a);
+	static void reset_all_flexdata_default_colours();
+
+	enum  CONFIG_FLAG {
+		SORT_BY_OPTION_ID	= 1 << 0,	
+	};
+};
+
+/**
+* @class MenuOption
+* @brief A FlexDropdown option element.
+*
+*/
+class MenuOption : public GUI_thing {
+
+public:
+	MenuOption	() {}
+	~MenuOption() {} 
 };
 
 
 /**
- * @brief A data plotting element used to display data from a Dataset.
- * Implements QCustomPlot plots.
- * Can contain multiple datasets.
- * Can be configured to contain walking data or static data.
- * Can be configured to use time as x-axis values.
- * Can be configured to have any of a selection of IO elements
- *  - Legend
- *  - Legend toggle button
- *  - Mouse control button (allows users to drag and zoom)
- *  - Save data button (saves the Datasets shown to a text file)
- *  - Dataset select drop down menu
- *  - Axes Label select drop down menu
- *  - Graph name label
- *
- */
+* @class FlexPlot
+* @brief A data plotting element used to display data from a Dataset.
+* 
+* @note
+* Implements QCustomPlot plots.
+* Can contain multiple datasets.
+* Can be configured to contain walking data or static data.
+* Can be configured to use time as x-axis values.
+* Can be configured to have any of a selection of IO elements
+*  - Legend
+*  - Legend toggle button
+*  - Mouse control button (allows users to drag and zoom)
+*  - Save data button (saves the Datasets shown to a text file)
+*  - Dataset select drop down menu
+*  - Axes Label select drop down menu
+*  - Graph name label
+*
+*/
 class FlexPlot : public FlexElement{
 public:
 
@@ -840,8 +973,8 @@ public:
 	FlexPlot();
 	~FlexPlot();
 
-	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, float min, float max, u16 config = 0);
-	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, float min, float max, u16 config = 0);
+	void add(GUI_Page* parent, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, float min, float max, u32 config = 0);
+	void add(const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, float min, float max, u32 config = 0);
 
 	void set_range(float min, float max);
 	void set_secondary_range(float min, float max);
@@ -869,25 +1002,31 @@ public:
 };
 
 /**
- * @brief Data container for plotting in FlexPlots
- * Can be configured to appear on the main (left) y-axis or the secondary (right) y-axis
- * Can be configured to have time values in the x-axis.
- * Can be configured to connect data points with a line or not.
- * Can be configured to draw a variety of shapes at each data point.
- */
+* @class Dataset
+* @brief Data container for plotting in FlexPlots
+* 
+* @note
+* Can be configured to appear on the main (left) y-axis or the secondary (right) y-axis
+* Can be configured to have time values in the x-axis.
+* Can be configured to connect data points with a line or not.
+* Can be configured to draw a variety of shapes at each data point.
+*/
 class Dataset: public GUI_thing{
 public:
 
 	Dataset();
 	~Dataset();
 
-	void add(FlexPlot * plot, const char * name, const char * _x_label, const char * _y_label, u16 config = 0);
+	void add(FlexPlot * plot, const char * name, const char * _x_label, const char * _y_label, u32 config = 0);
 	void set_max_data_points(u32 number_of_data_points);
 	void remove();
 	void hide();
 	void show();
 	void plot() { show(); }
 	void add_data(int xData, int yData);
+#ifndef WINDOWS
+	void add_data(s32 xData, s32 yData);
+#endif
 	void add_data(u64 xData, int yData);
 	void add_data(u16 xData, u16 yData) { add_data((int)xData, (int)yData); }
 	void add_data(u32 xData, u32 yData) { add_data((int)xData, (int)yData); }
@@ -909,3 +1048,62 @@ public:
 		NONE					= 24
 	};
 };
+
+/**
+* @class DataLog
+* @brief Object used to write data to datafiles on the application's host machine.
+*/
+class DataLog {
+	friend class DataLog_registry;
+
+public:
+
+	DataLog() :	my_id(id_assigner++) {}
+	~DataLog() {
+		close();
+	}
+
+	int is_open() { return status; }	
+
+	void add(const char* name);
+	void write(const char* string);
+	void close();
+
+	u32 id() { return my_id; }
+
+protected:	
+		
+	u8 status = 0;
+	const u32 my_id;
+
+	DataLog* next = 0; // used by the DataLog_registry to maintain a linked list
+
+	int update_status(int new_status) {
+		u8 input = (u8)new_status;
+		
+		if (input == status) return 0;
+		status = input;
+		return 1;
+	}
+
+private:
+	static int id_assigner;
+};
+
+/**
+* @class DataLog_registry
+* @brief Static linked list of all DataLogs.
+*/
+class DataLog_registry {
+public:
+	
+    static void add 			(DataLog* new_datalog);
+    static int remove 			(DataLog* to_remove);
+	static int update_status	(u32 id, int value);
+    static DataLog* get			(u32 id);
+
+private:
+	static DataLog* list;
+};
+
+

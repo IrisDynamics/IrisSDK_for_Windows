@@ -1,9 +1,0 @@
-<map id="message_queue.h" name="message_queue.h">
-<area shape="rect" id="node1" title="Buffer queue for transmitting and receiving messages through the UART channels." alt="" coords="38,5,166,32"/>
-<area shape="rect" id="node2" href="$transaction_8h.html" title="MODBUS RTU frame object for outgoing and incoming requests." alt="" coords="53,80,150,107"/>
-<area shape="rect" id="node3" title=" " alt="" coords="18,229,84,256"/>
-<area shape="rect" id="node4" href="$mb__crc_8h.html" title=" " alt="" coords="112,155,188,181"/>
-<area shape="rect" id="node6" href="$types_8h.html" title=" " alt="" coords="22,155,88,181"/>
-<area shape="rect" id="node7" title=" " alt="" coords="212,155,391,181"/>
-<area shape="rect" id="node5" href="$mb__config_8h.html" title=" " alt="" coords="108,229,200,256"/>
-</map>

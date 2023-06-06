@@ -3,41 +3,40 @@
  * @author  Kyle Hagen <khagen@irisdynamics.com>
  * @version 2.2.0
  * @brief static definitions and implementations of the IrisControls object members
-    
+	
 	@copyright Copyright 2022 Iris Dynamics Ltd 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
 
-    For questions or feedback on this file, please email <support@irisdynamics.com>.
+	For questions or feedback on this file, please email <support@irisdynamics.com>.
  */
 #pragma warning(disable : 4996).
 
 #include "iriscontrols4.h"
+#include <stdio.h>	//k8 added 
 
-	uint8_t CRC::table[256];
-	int 	CRC::is_built = 0;
+uint8_t CRC::table[256];
+int 	CRC::is_built = 0;
 
- /**
-  * @brief 
-  *
-  * Starts the transmitter when it is idle and there is data in the tx_buffer
-  * Removes all pending messages from the rx buffer by monitoring the pending_incoming_messages counter
-  *
-  * Returns the number of pending messages parsed
-  */
-
-
+/**
+* @fn int IrisControls4::check()
+* @brief Starts the transmitter when it is idle and there is data in the tx_buffer.
+* @param[out] int ret - The number of pending incoming messages. (Should be 0 as this function calls parse_message() until that time).
+*
+* @note 
+* Removes all pending messages from the rx buffer by monitoring the pending_incoming_messages counter.
+* Returns the number of pending messages parsed
+*/
 int IrisControls4::check() {
-
 	//poll interchar timer and clear receive buffer if timer exceeded
 	if (is_disconnected() && is_interchar_timer_expired()) {
 		receive_buffer.clear();
@@ -46,6 +45,19 @@ int IrisControls4::check() {
 
 	//poll the hardware receiver (if implemented by platform)
 	receive();
+
+	if (receive_buffer.size()) {
+
+		//check to see there is a full message in the circular buffer.
+		u32 start = receive_buffer.start_index;	
+		
+		while (start != receive_buffer.end_index && check_for_full_message(start)) {
+			pending_incoming_messages++;
+			start++;
+		}
+
+		if (!pending_incoming_messages && is_disconnected()) start_interchar_timer();
+	}
 
 	//enter timeout condition if timer expires while connected and no pending incoming messages
 	if( is_connected()
@@ -57,53 +69,135 @@ int IrisControls4::check() {
 		!was_timed_out)
 	{
 		connection_status = timed_out;
+		print_l("connection status = timed out");
 		was_timed_out	= 1;
 	}
 
 	// Parse message - empty receive buffer
 	u32 ret = pending_incoming_messages;
-	while (pending_incoming_messages) {
-		get_message		(command, argument);
-		parse_message	(command, argument);
-	}
 
+	//parse messages while there are messages to parse 
+	while (pending_incoming_messages) {		
+		parse_message	(command);
+	}
 	return ret;
 }
 
- /*
-  * @brief parses IC4 messages
-  * 
-  * @return 0 when the message was not parsed by the API parser (ie the message should be passed along to subsequent parsers), and 1 when the message was parsed
-  */
-int IrisControls4::parseAPI(char* command, char* arg) {
-	int command_id;
+/**
+* @fn int IrisControls4::check_for_full_message(u32& start, u32& end)()
+* @brief Determines if a full messages has been received in the receive buffer.
+* @param[in] u32& start	- The starting position in the circular buffer.
+* @param[out] int 		- Returns 1 if a full message was found, otherwise 0.
+*  
+*/
+int IrisControls4::check_for_full_message(u32 &start) {
 
-	if (command[0] == '\x02') {
-		command_id = int(command[1]);
-	}	
-	else {
-		if (command[0] == '\0')	
-			return 1;	// ie we've "parsed" an empty command, or a command that was only the line return
-		else 
-			return 0;	// if the command character was not the IC4 command start character, this parser returns 0 to let other parsers check the message 
+	//check for handshake, name enquiry, or EOT if disconnected (these messages aren't properly byte stuffed with trailers).
+	if (is_disconnected()) {
+
+		u32 end = receive_buffer.end_index;
+
+		int command_id = (int)receive_buffer.d[((start + 1) & receive_buffer.mask)];
+		
+		switch (command_id) {
+			case HANDSHAKE:
+			case NAME_ENQUIRY:
+			case BEGIN_CONNECTION:
+			case END_OF_TRANSMISSION:
+				if (end - start >= NO_PAYLOAD_LENGTH) {
+					start += 2;
+					if (receive_buffer.d[start & receive_buffer.mask] == TRAILER) start++;
+					return 1;
+				}			
+				break;
+			
+			// Check for console command when disconnected. Used by Orcabrains to command device reset.
+			case CONSOLE_COMMAND:
+			default:
+				while (start != receive_buffer.end_index) {
+					if (receive_buffer.d[start & receive_buffer.mask] == FRAMING_CHAR) return 1;
+					start++;
+				}
+				break;
+		}
 	}
+	else {			
+
+		bool start_found	= false;
+		bool end_found		= false;
+
+		//go through rx buffer to find FLAG chars and then use logic to see if they are a true start or end of message
+		while (start != receive_buffer.end_index) {
+
+			//look at each char and if it's a flag, check to see if its a true FLAG or true TRAILER
+			if (receive_buffer.d[start & receive_buffer.mask] == FLAG) {
+
+				//Test if this FLAG is a true begin of message (a payload byte that happens to be FLAG will ALWAYS be preceeded by ESC and a trailer precceded with TRAILER).
+				if ((start == receive_buffer.start_index)
+					|| (receive_buffer.d[((start - 1) & receive_buffer.mask)] != TRAILER
+					&&  receive_buffer.d[((start - 1) & receive_buffer.mask)] != ESC))
+				{
+					start_found = true;
+				}
+
+				//Test if this FLAG is a true trailer (a trailer FLAG will always be preceeded by TRAILER).		
+				if (start != receive_buffer.start_index
+					&& receive_buffer.d[((start - 1) & receive_buffer.mask)] == TRAILER)
+				{
+					end_found = true;
+				}
+			}
+			//if we found both start and end, return 1
+			if (start_found && end_found) return 1;
+
+			start++;
+		}
+	}
+
+	return 0;
+}
+
+/**
+* @fn int IrisControls4::parse_API()
+* @brief Parses IC4 messages. 
+* @return int - Returns 0 when the message was not parsed by the API parser (ie the message should be passed along to subsequent parsers), and 1 when the message was parsed
+*/
+int IrisControls4::parse_API() {	
+
+	// Here ret represents whether a full message was parsed
+	int ret = 0;
 	
+	// If the FLAG isn't present, this isn't an IC4 message so return 0
+	if(receive_buffer.d[receive_buffer.start_index & receive_buffer.mask] != FLAG) return 0;
 
+	// Check the command ID
+	int command_id = (int)receive_buffer.d[(receive_buffer.start_index + 1) & receive_buffer.mask];
+
+	// If the command is a console command, return early and let another parser parse this message.
+	if (command_id == CONSOLE_COMMAND){	return 0; }
+
+	// Pop the FLAG char off the RX buffer
+	receive_buffer.popchar();
+
+	//handle the command based on the command_id
 	switch (command_id) {
-
-		unsigned int index;
+				
 		int id;
 		int value;
 
-		case EOT_CHAR:			
-			handle_eot();				
-			return 1;
-
+		case END_OF_TRANSMISSION:
+			receive_buffer.popchar();			
+			handle_eot();	
+			ret = 1;
+			break;
 		case NAME_ENQUIRY: //name query
+			receive_buffer.popchar();
 			enquiryResponse();
-			return 1;
-
-		case HANDSHAKE: {//challenge	
+			ret = 1;
+			break;
+		case HANDSHAKE: { //challenge
+			//pop the challenge char (x06) off the recieve_buffer
+			receive_buffer.popchar();
 			u64 now = system_time();
 	#ifdef BYTE_STUFFING_PARSING
 			build_crc_data((u16)IC4_virtual->byte_stuffing);
@@ -120,230 +214,312 @@ int IrisControls4::parseAPI(char* command, char* arg) {
 
 			handshakeResponse(now, CRC::generate(crc_data, crc_index));
 			crc_index = 0;
-			return 1;			
+			ret = 1;
+			break;
 		}
 		case BEGIN_CONNECTION:
-			IO_registry::reset_active_list();
+			receive_buffer.popchar();
 			connection_status = connected;
 			print_l("IrisControls4: connected!!!\r");
-			return 1;
+			ret = 1;
+			break;
 
 		case END_CONNECTION:
+			receive_buffer.popchar();
 			set_disconnected();
-			return 1;
+			ret = 1;
+			break;
 
 		case FLEXELEMENT_PRESSED:
-//			print_l("Button pressed \r");
-			index = 0;
-			id = parse_int(arg, index);
+			receive_buffer.popchar();
+			//PRINTL("Button pressed");
+			id = pop_int();
 			IO_registry::set_element_pressed(id);
 			element_press_received = 1;
-			return 1;
+			ret = 1;
+			break;
 
 		case BUTTON_TOGGLED:
-//			print_l("Button toggled \r");
-			index 		= 0;
-			id 			= parse_int(arg, index);
-			value 		= parse_int(arg, index);
+			receive_buffer.popchar();
+			//PRINTL("Button toggled");
+			id 			= pop_int();
+			value 		= pop_bool();
 			IO_registry::set(id, value);
 			element_press_received = 1;
-			return 1;
+			ret = 1;
+			break;
 
-		case FLEXELEMENT_UPDATED: {
-//			print_l("Element updated \r");
-			index 	= 0;
-			id 		= parse_int(arg, index);
-			value 	= parse_int(arg, index);
+		case FLEXELEMENT_UPDATED: 
+			receive_buffer.popchar();
+			//PRINTL("Element updated");
+			id 		= pop_int();
+			value 	= pop_int();
 			element_value_received = 1;
-//			print_d(value); print_l("\r");
 			IO_registry::set(id, value);
-			return 1;
-		}
 
-		case GENERIC_MESSAGE: {
-			index = 0;
-			unsigned int messageCode;
-			messageCode = parse_int(arg, index);
+			ret = 1;
+			break;
 
-			switch (messageCode) {
-
-				case GEOMETRY_QUERY: {
-					//print_l("Max rows/cols:");
-					u16 rows = parse_int(arg, index);
-					u16 columns = parse_int(arg, index);
-					//print_d(rows);
-					//print_c(' ');
-					//print_d(columns);
-					//print_c('\r');
-
-					max_rows = rows;
-					max_cols = columns;
-
-					return 1;
-				}
-				default:
-					return 0;
-			}
-		}
-
-		case ERR_HANDLING: {
-			unsigned int errorCode;
-			index = 0;
-			errorCode = parse_int(arg, index);
-
-			//print_l("Error!\r");
-
-			switch (errorCode) {
-
-				case ERROR_COLLISION: {
-//					print_l("Error: Element Collision:");
-//					int _id = parseInt(arg, index);
-//					id 		= parseInt(arg, index);
-//					IO_thing * id_thing 	= IO_registry::get(id);
-//					IO_thing * _id_thing 	= IO_registry::get(_id);
-//
-//					print_l("\rTried to add \"");
-//					if( id_thing) 	{ print_l(id_thing->name); } 	else { print_l("id: "); print_d(id); 	}
-//					print_l("\" to the grid, but \"");
-//					if( _id_thing) 	{ print_l(_id_thing->name); } 	else { print_l("id: "); print_d(_id); 	}
-//					print_l("\" was in the way.\r");
-
-					return 1;
-				}
-
-				case ERROR_OUT_OF_BOUNDS: {
-//					print_l("Error: Element Out of Bounds:");
-//					id = parseInt(arg, index);
-//					IO_thing * id_thing = IO_registry::get(id);
-//
-//					print_l("\rTried to add \"");
-//					if( id_thing) 	{ print_l(id_thing->name); } 	else { print_l("id: "); print_d(id); 	}
-//					print_l("\" to the grid, but it would have been out of bounds\r");
-
-					return 1;
-				}
-
-				case ERROR_INVALID_SIZE: {
-//					print_l("Error: Invalid Size:");
-//					id = parseInt(arg, index);
-//					int min_h = parseInt(arg, index);
-//					int min_w = parseInt(arg, index);
-//					int alloted_h = parseInt(arg, index);
-//					int alloted_w = parseInt(arg, index);
-//
-//					IO_thing * id_thing = IO_registry::get(id);
-//
-//					print_l("\rTried to add \"");
-//					if( id_thing) 	{ print_l(id_thing->name); } 	else { print_l("id: "); print_d(id); 	}
-//					print_l("\" to the grid with an invalid size.\r Minimum height/width: ");
-//					print_d(min_h);
-//					print_l("/");
-//					print_d(min_w);
-//					print_l(" Alloted height/width: ");
-//					print_d(alloted_h);
-//					print_l("/");
-//					print_d(alloted_w);
-//					print_l(" pixels.\r");
-
-					return 1;
-				}
-				default:
-					return 0;
-			}
+		case DATALOG_UPDATED:
+			receive_buffer.popchar();
+			//PRINTL("DataLog updated");
+			id 		= pop_int();
+			value 	= pop_int();
+			DataLog_registry::update_status(id, value);
+			ret	= 1;
+			break;
 
 		default:
-			return 0;
-		}
-
+			PRINTL("Error in parseAPI!");
+			break;
 	}
-	return 0;
-}
 
-
-
-/**
- * Expects space-delimited integer arguments
- * Not explicit error checking
- * Looks down the input string starting at the index, and converts the
- * text to an int.
- * Increments the index reference according to how many characters were read
- * 
- * Usage:
- * 		uint index = 0;
- *		int i = parseInt ( arg, index );
- *		int j = parseInt ( arg, index );
- *		int k = parseInt ( arg, index );
- *		xil_printf( "output: %d, %d, %d\r" , i, j, k );
- *
- */
-int IrisControls4::parse_int(char* input, unsigned int& index) {
-
-	int charsread;
-	int output = 0;
-	while (input[index] == ' ') index++;
-	if (input[index] == '\0') return 0;		// cover special case when parseInt was called on an emtpy (or all-whitespace) string. 
-	if (sscanf(input + index, "%d%n", &output, &charsread))
-		index += charsread;
-	return output;
-}
-
-
-double IrisControls4::parse_double(char* input, unsigned int& index) {
-	int charsread;
-	double output = 0.0;
-	while (input[index] == ' ') index++;
-	if (input[index] == '\0') return 0;		// cover special case when parseInt was called on an empty (or all-whitespace) string.
-	if (sscanf(input + index, "%lf%n", &output, &charsread))
-		index += charsread;
-	return output;
-}
-
-
- /**
-  * @brief parse a message, which contains a command string, and optionally an argument string.
-  */
-int IrisControls4::parse_message(char* cmd, char* arg) {
-	int ret = parseAPI				( cmd, arg );	//IC4 API parser
-		ret |= parse_app			( cmd, arg );	//Application layer parser
-		ret |= parse_console_msg	( cmd, arg );	//IC4 Console Message Parser
-		ret |= parse_device_driver	( cmd, arg );	//Hardware Specific Parser
-
-	if (!ret) print_help(cmd, arg);
+	//pop the trailer off the buffer. 
+	if (ret) {
+		receive_buffer.popchar();						//FRAMING_CHAR or TRAILER
+		if(is_connected()) receive_buffer.popchar();	//FLAG
+	}
 
 	return ret;
 }
 
-
 /**
- * @brief add a character (probably incoming coming from a UART) to the rx_buffer
- *
- * This function watches for the line-return character; when one is detected, a counter tracking the number of unparsed incoming messages is increased
- * This function would typically be called by a UART rx interrupt, or by a function that polls the uart for received character(s)
- * Increments the pending_incoming_messages counter
- */
-void IrisControls4::receive_char(char c) {
-	
-	if(receive_buffer.size() >= receive_buffer.max_size - 1){
-//		if(!receive_buffer.overflow){
-//			print_l("\r\rIC RX buffer overflowed. New messages are discarded during this condition.\r\r");
-			errors.rx_buffer_overflow++;
-//		}
-//		receive_buffer.overflow = true;
+* @fn int IrisControls4::parse_int()
+* @brief Parses an int from the receive buffer.
+* @return int result - The parsed int.
+* 
+* @note
+* Called by console command parsers.
+*
+*/
+int IrisControls4::parse_int() {
+
+	// If no data before trailer or no bytes in rx buffer, return early.
+	if (!receive_buffer.bytes_to_trailer()) return -1;
+
+	int output = 0;
+
+	// Remove any extra whitespace before the argument starts
+	while (receive_buffer.d[receive_buffer.start_index & receive_buffer.mask] == SPACE) receive_buffer.popchar();
+
+	char c;
+
+	// Populate argument char array
+	int i = 0;
+	while(receive_buffer.bytes_to_trailer() && i < MAX_ARGUMENT_LENGTH) {
+
+		c = receive_buffer.d[receive_buffer.start_index & receive_buffer.mask];
+
+		if (c == FRAMING_CHAR) { receive_buffer.popchar(); break; }
+		if (c == SPACE || c == TRAILER) { break; }
+
+		argument[i++] = c;
+
+		receive_buffer.popchar();
 	}
 
-	else {
+	argument[i] = '\0';
 
+	// Convert to int from char array
+	sscanf(argument, "%d", &output);
+
+	argument[0] = '\0'; // Reset argument char array
+
+	return output;
+}
+/**
+* @overload int IrisControls4::parse_int(char* input, unsigned int& index)
+* @brief Parses an int from the receive buffer - parameters for the old implementation - allows for backwards compatibility.
+* @param[in] char* input			- The char array in the input buffer.
+* @param[in] unsigned int& index	- The position in the array to start parsing.
+* @return int						- The parsed int.
+*/
+int IrisControls4::parse_int(char* input, unsigned int& index) {
+	return parse_int();
+}
+
+/**
+* @fn double IrisControls4::parse_double()
+* @brief Parses a double from the receive buffer.
+* @return double result	- The parsed double.
+*
+* @note
+* Called by console command parsers.
+*/
+double IrisControls4::parse_double() {
+
+	// If no data before trailer or no bytes in rx buffer, return early.
+	if (!receive_buffer.bytes_to_trailer()) return -1;
+
+	double output = 0.0;
+
+	// Remove any extra whitespace before the argument starts
+	while (receive_buffer.d[receive_buffer.start_index & receive_buffer.mask] == SPACE) receive_buffer.popchar();
+
+	char c;
+
+	// Populate argument char array
+	int i = 0;
+	while(receive_buffer.bytes_to_trailer() && i < MAX_ARGUMENT_LENGTH) {
+
+		c = receive_buffer.d[receive_buffer.start_index & receive_buffer.mask];
+
+		if (c == FRAMING_CHAR) { receive_buffer.popchar(); break; }
+		if (c == SPACE || c == TRAILER) { break; }
+
+		argument[i++] = c;
+
+		receive_buffer.popchar();
+	}
+
+	argument[i] = '\0';
+
+	// Convert to double from char array
+	sscanf(argument, "%lf", &output);
+
+	argument[0] = '\0'; // Reset argument char array
+
+	return output;
+}
+/**
+* @fn double IrisControls4::parse_double(char* input, unsigned int& index)
+* @brief Parses a double from the receive buffer - parameters for the old implementation - allows for backwards compatibility.
+* @param[in] char* input			- The char array in the input buffer.
+* @param[in] unsigned int& index	- The position in the array to start parsing.
+* @return double					- The parsed double.
+*/
+double IrisControls4::parse_double(char* input, unsigned int& index) {
+	return parse_double();
+}
+
+/**
+* @fn int IrisControls4::pop_int()
+* @brief Parses an int from the receive buffer.
+* @param[out] int result - The parsed int.
+* 
+* @note
+* Called by the IC4 serial messages.
+* Pops the next 4 bytes off the buffer, and shifts them appropriatly, and casts them to an int.
+*/
+int IrisControls4::pop_int() {
+
+	u8 parsed[4] = { 0 };
+
+	for (int i = 0; i < 4; i++) {
+		u8 test_char = (u8)receive_buffer.popchar();
+
+		if (test_char == ESC) test_char = (u8)receive_buffer.popchar();
+
+		parsed[i] = test_char;
+	}
+
+	int result =	(parsed[0] << 24)	|
+					(parsed[1] << 16)	|
+					(parsed[2] << 8)	|
+					(parsed[3]);
+
+	return result;
+}
+
+/**
+* @fn double IrisControls4::pop_double()
+* @brief parses a double from the receive buffer.
+* @param[out] double result	- The parsed double.
+* 
+* @note
+* Pops the next 4 bytes off the buffer, and shifts them appropriatly, and casts them to a double.
+*/
+double IrisControls4::pop_double() {
+
+	double result;
+	u8 parsed[4] = { 0 };
+
+	for (int i = 0; i < 4; i++) {
+		u8 test_char = (u8)receive_buffer.popchar();
+		if (test_char == ESC) test_char = (u8)receive_buffer.popchar();
+		parsed[i] = test_char;
+	}
+
+	memcpy(&result, parsed, sizeof(result));
+
+	return result;
+}
+
+/**
+* @fn bool IrisControls4::pop_bool()
+* @brief Pops a char from the receive buffer, and returns that bool.
+* @param[out] bool result - The parsed bool.
+*/
+bool IrisControls4::pop_bool() {
+	int result = receive_buffer.popchar();
+	return result;
+}
+
+/**
+* @fn int IrisControls4::parse_message(char* cmd)
+* @brief Parses a message, which contains a command string, and optionally an argument string.
+* @param[in] char* cmd - The char array containing the command.
+* @param[out] int ret - Returns 1 if the message was parsed and 0 if not.
+*/
+int IrisControls4::parse_message(char* cmd) {
+	//look at the command id, pop the correct number off, and then parse the payload, which we just popped off 
+	int ret = parse_API				();	//IC4 API parser
+
+	//if parse_API did not return a 1, use the other parsers to parse the message
+	if (!ret && get_message(cmd)) {
+		ret |= parse_app(cmd);	//Application layer parser
+		ret |= parse_app(cmd, cmd); //legacy app parser format, deprecated
+		ret |= parse_console_msg(cmd);	//IC4 Console Message Parser
+		ret |= parse_device_driver(cmd);	//Hardware Specific Parser		
+
+		//Make sure the console message was fully parsed i.e., no more stray bytes on the RX buffer.
+		if (is_connected() && receive_buffer.recover()) {
+			PRINT("Error: Previous console message: "); PRINTL(cmd);  PRINTL("was not parsed correctly. Arguments remained on the buffer.");
+		}
+	}
+
+	//if none of the parsers were able to parse the message, print help
+	if (!ret) {
+		print_help(cmd);
+	}
+
+	//decrement pending message count as the message is now off the recieve_buffer
+	pending_incoming_messages--;
+	return ret;
+}
+
+
+
+
+/**
+* @fn void IrisControls4::receive_char(char c)
+* @brief checks for an overflow, and if everything is good add a character (probably incoming coming from a UART) to the rx_buffer.
+* @param[in] char c - The char to be written onto the rx buffer.
+*
+* @note
+* This function would typically be called by a UART rx interrupt, or by a function that polls the uart for received character(s).
+*/
+void IrisControls4::receive_char(char c) {
+	//check to see if the buffer has overflowed 
+	if (receive_buffer.size() >= receive_buffer.max_size - 1) {
+		print_l("\r\rIC RX buffer overflowed. New messages are discarded during this condition.\r\r");
+		errors.rx_buffer_overflow++;
+	}
+	else {
+		//buffer is good, add the char to the software buffer 
+		//print_l("printchar");
+		//print_c(c);
 		receive_buffer.printchar(c);
 
-		if (c == '\r') 			 	{ pending_incoming_messages++;  }
-		else if (is_disconnected()) { start_interchar_timer();		}
 	}
 	
 }
 
 /**
- * @brief Writes a char to the transmit buffer checking for overflow
- */
+* @fn void IrisControls4::write_tx_buffer(char c)
+* @brief Writes a char to the transmit buffer checking for overflow
+* @param[in] char c - The char to be written onto the tx buffer.
+*/
 void IrisControls4::write_tx_buffer(char c){
 	if(transmit_buffer.size() >= transmit_buffer.max_size - 1) {
 //		transmit_buffer.overflow = true;
@@ -361,89 +537,82 @@ void IrisControls4::write_tx_buffer(char c){
 }
 
 /**
- * @brief pops the oldest message off the rx_buffer
- *
- * The message's command string is saved to the command buffer 
- * The message's arguments string is saved to the argument buffer
- * This function assumes that the pending_incoming_messages counter is greater than zero
- * Decrements the pending_incoming_messages counter
- *
- * Note that the passed command and argument arrays must have memory allocated to them 
- */
-int IrisControls4::get_message(char* command, char* argument) {
+* @fn int IrisControls4::get_message(char* command)
+* @brief checks to see whether a valid console commands has been recieved, and if so, saves it.
+* @param[in] char* commmand - The command.
+* @param[out] int ret		- 1 if the command is complete, otherwise 0.
+* 
+* @note
+* The message's command string is saved to the command buffer. 
+* The passed command array must have memory allocated to it. 
+*/
+int IrisControls4::get_message(char* cmd) {
 
-	u32 cmd_pos = 0, arg_pos = 0;
+	// Check to see if the message is an IC4 message by checking for the FLAG char.
+	if(receive_buffer.d[receive_buffer.start_index & receive_buffer.mask] == FLAG){
 
-	int complete_cmd = 0;
-	for (cmd_pos = 0; cmd_pos < receive_buffer.size(); cmd_pos++) {					// check for first whitespace or end of buffer
-		u32 index = (cmd_pos + receive_buffer.start_index) & receive_buffer.mask;	// handle wrap-around for end of buffer memory
-		if (receive_buffer.d[index] == '\r') {										// cmd has no arguments; message is fully extracted
-			complete_cmd = 2;
+		receive_buffer.popchar(); // pop the FLAG off
+
+		// All IC4 console messages should have the CONSOLE_COMMAND command ID.
+		if((int)receive_buffer.popchar() != CONSOLE_COMMAND) {
+			PRINTL("[IC4] Corrupt console message received - get message");
+			receive_buffer.clear();
+			return 0;
+		}
+	}
+
+	// Checks for message that starts with the SPACE char
+	if (receive_buffer.d[receive_buffer.start_index & receive_buffer.mask] == SPACE) {
+		PRINTL("Error: Console message cannot start with whitespace.");
+	}
+
+	u32 cmd_pos = 0;
+	int ret = 0;
+
+	while (receive_buffer.size()) {
+		char temp = receive_buffer.d[receive_buffer.start_index & receive_buffer.mask];
+
+		if (temp == SPACE || temp == TRAILER) {
+			ret = 1;
 			break;
 		}
-		if (receive_buffer.d[index] == ' ') {										// cmd has arguments; index points to whitespace between command and first arg
-			complete_cmd = 1;
+		
+		if (temp == FRAMING_CHAR) { // This case should only occur if disconnected from IC4
+			receive_buffer.popchar();
+			ret = 1;
 			break;
 		}
-		if (receive_buffer.d[index] == '\0') {										// rx buffer contains an incomplete message 
-			complete_cmd = 0;
-			break;
-		}
-		command[cmd_pos] = receive_buffer.d[index];									// write from rx_buffer to command string
+
+		receive_buffer.popchar();
+
+		cmd[cmd_pos++] = temp;		
 
 		if (cmd_pos >= MAX_COMMAND_LENGTH - 1) {
 			PRINTL("[IC4] Command overflow: discarding all received data");
-			receive_buffer.start_index = 0;
-			receive_buffer.end_index = 0;
+			receive_buffer.clear();
 			pending_incoming_messages = 0;
-			command[0] = '\0';
-			argument[0] = '\0';
+			cmd[0] = '\0';
 			handle_eot();
 			return 0;
 		}
 	}
-	command[cmd_pos] = '\0';													// terminate command string
 
-	if (complete_cmd) {
-	    // Get args
-		for (arg_pos = 0; arg_pos + cmd_pos < receive_buffer.size(); arg_pos++) {
-			u32 index = (arg_pos + cmd_pos + receive_buffer.start_index) & receive_buffer.mask;		
-			if (receive_buffer.d[index] == '\r') {								// end of message detected
-				complete_cmd = 2;
-				break;
-			}
-			argument[arg_pos] = receive_buffer.d[index];						// write from rx_buffer to argument string
+	cmd[cmd_pos] = '\0';	// terminate command string
 
-			if (arg_pos >= MAX_COMMAND_LENGTH - 1) {
-				PRINTL("[IC4] Argument overflow: discarding all received data");
-				receive_buffer.start_index = 0;
-				receive_buffer.end_index = 0;
-				pending_incoming_messages = 0;
-				command[0] = '\0';
-				argument[0] = '\0';
-				handle_eot();
-				return 0;
-			}
-		}
-		argument[arg_pos] = '\0';												// terminate argument string
+	if (!ret) {
+		cmd[0] = '\0';
 	}
 
-	if (complete_cmd == 2) {
-		receive_buffer.start_index += arg_pos + cmd_pos + 1;
-		pending_incoming_messages--;
-		return 1;
-	}
-
-	command[0] = '\0';
-	argument[0] = '\0';
-
-	return 0;
+	return ret;
 }
 
 /**
- * @brief Builds the crc data array for use in the handshake
-
- */
+* @fn void IrisControls4::build_crc_data(const char * data)
+* @brief Builds the crc data array for use in the handshake.
+* @param[in] const char* data	- The string data used to create the CRC array.
+* @param[in] u16 u				- The u16 data used to create the CRC array.
+* @param[in] u64				- The u64 data used to create the CRC array.
+*/
 void IrisControls4::build_crc_data(const char * data){
 	for (int i = 0; data[i] != '\0'; i++){
 		crc_data[crc_index] = data[i];
@@ -462,47 +631,3 @@ void IrisControls4::build_crc_data(u64 u){
 		crc_index++;
 	}
 }
-
-/*
- * @brief Checks value of all active elements (active elements are those that have had their
- * "add" commands called and therefore they exist in Iris Controls. Those values are used to
- * compute a CRC which is transmitted to Iris Controls for comparison.
- */
-void IrisControls4::device_state_check(){
-
-//
-//	uint8_t data;
-//	uint8_t remainder = 0;
-//
-//	int item_count = 0;
-//
-//	print_l("========================== \rDevice Elements:\r");
-//
-////	for (IO_thing * thing = IO_registry::get_active_list(); thing; thing = thing->next_active) {
-////		item_count++;
-////		print_l("\rName: \"");
-////		print_l(thing->name);
-////		print_l("\" || Value: ");
-////		print_d(thing->get()); 
-////
-////		const char * value_char = get_char_ptr(thing->get()); 
-////
-////		//run formatted value through CRC
-////		for (int byte = 0; value_char[byte] != '\0'; ++byte) {
-////			data = value_char[byte] ^ remainder;
-////			remainder = CRC::table[data] ^ (remainder << 8);
-////		}
-////	}
-//	print_l("\r\rItem Count: ");
-//	print_d(item_count);
-//	print_l("\rDevice CRC Result: ");
-//	print_d(remainder);
-//	print_l("\r ========================== \r\r");
-//
-//
-//	//send serial cmd to IC
-//	tx_crc_result(remainder);
-
-}
-
-

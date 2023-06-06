@@ -1,6 +1,0 @@
-<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$class_modbus_client_application.html" title="Base implementation of a Modbus client application layer." alt="" coords="5,31,171,57"/>
-<area shape="rect" id="node2" href="$class_iris_client_application.html" title="Establishes a Modbus connection status between a client and server device." alt="" coords="219,31,355,57"/>
-<area shape="rect" id="node3" href="$class_actuator.html" title="Object that abstracts the communications between the client and a Orca motor server." alt="" coords="437,5,507,32"/>
-<area shape="rect" id="node4" href="$class_pneumatic_controller.html" title=" " alt="" coords="403,56,541,83"/>
-</map>

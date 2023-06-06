@@ -45,7 +45,6 @@ class IC4_kv31 : public IrisControls4 {
 protected:
 
 	UART_Type * uart_ptr;
-	LPTMR_Type * lptmr_ptr;
 
 	volatile bool frame_finished = 0; // for indicating that a half duplex frame has finished building, checked in ISR
 
@@ -61,11 +60,9 @@ public:
 	volatile states state = rx;
 
 	IC4_kv31 (
-		UART_Type * _uart_ptr,
-		LPTMR_Type *_lptmr_ptr
+		UART_Type * _uart_ptr
 	) :
-		uart_ptr(_uart_ptr),
-		lptmr_ptr(_lptmr_ptr)
+		uart_ptr(_uart_ptr)
 	{}
 
 	virtual ~IC4_kv31() {};
@@ -170,7 +167,7 @@ public:
 	}
 
 	/**
-	 * @brief Returns a string formatted uint64_t.
+	 * @brief Returns a string formatted float.
 	 * @param[in] float f - The float to print.
 	 * @param[out] const char * - The formatted input value.
 	 * Used to print floats to the console in Iris Controls
@@ -178,6 +175,19 @@ public:
 	const char* val_to_str(float f) override {
 		std::string str_obj(std::to_string(f));
 		return str_obj.c_str();
+	}
+
+	/**
+	 * @brief Returns 0.0 because the kv31 cannot use sscanf to parse doubles.
+	 * @return double 0.0.
+	 * @note
+	 * The IC4 library uses sscanf in its console command argument parsing functions. The KV31 platform does not contain
+	 * a complete standard library and using sscanf with floating point arguments produces undefined behaviour affecting
+	 * connection stability with IC4. This dummy implementation was added to provide user feedback.
+	 */
+	double parse_double() override {
+		PRINTL("Error: Cannot parse doubles on the KV31 platform. Please use integers and divide as appropriate.");
+		return 0.0;
 	}
 
 	virtual int random_number() {
@@ -241,6 +251,33 @@ public:
 				orca_mem.write(RX_TC_ERROR, orca_mem.read(RX_TC_ERROR) + 1);
 				break;
 		}
+	}
+
+	/**
+	* @fn int parse_device_driver(char* cmd)
+	* @brief Attempts to parse commands that were not successfully parsed by higher level parsers.
+	* @param[in] char* cmd - The command to be parsed
+	* @param[out] int - 1 if parsed successfully, 0 otherwise
+	*/
+	int parse_device_driver(char* cmd) {
+
+
+		std::string command_list = "\rKV31:\r";
+
+		START_PARSING
+
+		COMMAND_IS "system_time" THEN_DO
+
+			print_l("System Time: ");
+			print_d(system_time());
+			print_l(" us\r");
+
+		COMMAND_IS "help" THEN_DO
+
+			print_l(command_list.c_str());
+			return 1;
+
+		FINISH_PARSING
 	}
 
 };

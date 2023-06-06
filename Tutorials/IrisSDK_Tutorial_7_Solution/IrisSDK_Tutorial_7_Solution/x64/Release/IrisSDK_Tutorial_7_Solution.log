@@ -1,0 +1,50 @@
+﻿  IrisSDK_Tutorial_7.cpp
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\ic4_library\iriscontrols4.h(149,34): warning C4244: '=': conversion from 'u64' to 'volatile u32', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\modbus_client\modbus_client_application.h(313,26): warning C4244: '=': conversion from 'uint16_t' to 'uint8_t', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\modbus_client\modbus_client_application.h(315,26): warning C4244: '=': conversion from 'uint16_t' to 'uint8_t', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\modbus_client\device_drivers\windows\windows_modbus_client.h(311,1): warning C4267: 'argument': conversion from 'size_t' to 'DWORD', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\modbus_client\device_drivers\windows\windows_modbus_client.h(319,1): warning C4312: 'type cast': conversion from 'DWORD' to 'LPCWSTR' of greater size
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\modbus_client\device_drivers\windows\windows_modbus_client.h(409,1): warning C4312: 'type cast': conversion from 'DWORD' to 'LPCWSTR' of greater size
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\modbus_client\device_drivers\windows\windows_modbus_client.h(469,31): warning C4244: 'return': conversion from 'LONGLONG' to 'uint32_t', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\modbus_client\device_applications\actuator.h(146,38): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\modbus_client\device_applications\actuator.h(342,43): warning C4244: 'return': conversion from 'uint16_t' to 'uint8_t', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\ic4_library\device_drivers\windows\ic4_windows.h(172,1): warning C4312: 'type cast': conversion from 'DWORD' to 'LPCWSTR' of greater size
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Square_Wave_Signal.h(44,28): warning C4244: '=': conversion from 'double' to 'uint32_t', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Triangle_Wave_Signal.h(45,26): warning C4244: '=': conversion from 'float' to 'uint32_t', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Sine_Wave_Signal.h(107,24): warning C4244: '=': conversion from 'double' to 'uint32_t', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Sine_Wave_Signal.h(165,38): warning C4244: '=': conversion from 'float' to 'int32_t', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Sine_Wave_Signal.h(186,47): warning C4244: '=': conversion from 'uint64_t' to 'short', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Sine_Wave_Signal.h(191,31): warning C4244: '=': conversion from 'uint64_t' to 'short', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Sine_Wave_Signal.h(196,32): warning C4244: '=': conversion from 'uint64_t' to 'short', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Sine_Wave_Signal.h(201,32): warning C4244: '=': conversion from 'uint64_t' to 'short', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Spring.h(49,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Spring.h(51,64): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Spring.h(52,59): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Spring.h(57,1): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Spring.h(62,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Spring.h(64,57): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Spring.h(65,59): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Spring.h(70,1): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Damping.h(40,21): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Damping.h(45,17): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Motion.h(215,25): warning C4244: 'initializing': conversion from 'int64_t' to 'uint32_t', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Motion.h(216,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Force_Effect_Generator.h(39,21): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Force_Effect_Generator.h(62,66): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Force_Effect_Generator.h(65,58): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Force_Effect_Panel.h(128,50): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Force_Effect_Panel.h(134,51): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Force_Effect_Panel.h(149,46): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Force_Effect_Panel.h(151,47): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\ic4_library\io_elements.cpp(296,16): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\ic4_library\io_elements.cpp(500,16): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\ic4_library\iriscontrols4.cpp(22,32): warning C4081: expected 'newline'; found '.'
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\ic4_library\iriscontrols4.cpp(55,44): warning C4018: '>': signed/unsigned mismatch
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Signal_Panel.cpp(168,24): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Signal_Panel.cpp(178,24): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\libraries\irisSDK_libraries\Signal_Panel.cpp(191,24): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 681 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  IrisSDK_Tutorial_7_Solution.vcxproj -> C:\Users\RMcWilliam\Desktop\Repository\irisSDK_for_windows\Tutorials\IrisSDK_Tutorial_7_Solution\x64\Release\IrisSDK_Tutorial_7_Solution.exe

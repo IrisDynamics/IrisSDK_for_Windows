@@ -141,8 +141,14 @@ public:
 		return 0;
 	}
 
-	int parse_device_driver(char* cmd, char* args) {
-
+	/**
+	* @fn int parse_device_driver(char* cmd)
+	* @brief Attempts to parse commands that were not successfully parsed by higher level parsers.
+	* @param[in] char* cmd - The command to be parsed
+	* @param[out] int - 1 if parsed successfully, 0 otherwise
+	*/
+	int parse_device_driver(char* cmd) {
+		
 		std::string command_list = "\rK20: \r\r system_time\r";
 
 		START_PARSING

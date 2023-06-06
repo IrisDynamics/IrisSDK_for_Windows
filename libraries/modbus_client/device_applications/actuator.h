@@ -1,7 +1,7 @@
 /**
    @file actuator.h
-   @author Kali Erickson <kerickson@irisdynamics.com>, kyle hagen <khagen@irisdynamics.com>, dan beddoes <dbeddoes@irisdynamics.com>, rebecca mcwilliam <rmcwilliam@irisdynamics.com>
-   @brief  Actuator object that abstracts the use of the modbus library/communications
+   @author Kali Erickson <kerickson@irisdynamics.com>, rebecca mcwilliam <rmcwilliam@irisdynamics.com>, kyle hagen <khagen@irisdynamics.com>, dan beddoes <dbeddoes@irisdynamics.com>
+   @brief  Actuator object that abstracts the use of the modbus library/communications for communication with an Orca Series linear motor
    @version 2.2.0
     
     @copyright Copyright 2022 Iris Dynamics Ltd 
@@ -80,34 +80,95 @@ public:
 	{}
 
 	/**
+	*@brief Sets the type of command that will be sent on high speed stream (ie when enable() has been used, this sets the type of message sent from enqueue motor frame)
+	*/
+	typedef enum {
+		MotorCommand,
+		MotorRead,
+		MotorWrite
+	}StreamMode;
+
+	/**
 	 * @brief this tracks the type of motor command stream that is currently being used
 	 */
 	typedef enum {
-		SleepMode		= 0b0000,
-		ForceMode		= 0b0010,
-		PositionMode	= 0b0100
-	} CommunicationMode;
+
+		SleepMode		= 1,
+		ForceMode		= 2,
+		PositionMode	= 3,
+		HapticMode		= 4,
+		KinematicMode	= 5
+
+	} MotorMode;
+
+	enum {
+		ConstF	= 1 << 0,
+		Spring0 = 1 << 1,
+		Spring1 = 1 << 2,
+		Spring2 = 1 << 3,
+		Damper	= 1 << 4, 
+		Inertia = 1 << 5,
+		Osc0	= 1 << 6,
+		Osc1	= 1	<< 7
+	}HapticEffect;
+
+
 
 
 	/**
-	 * @brief the communication mode determines which commands are sent by enqueue_motor_frame
-	 * @param mode command stream type
-	 */
-	void set_mode(CommunicationMode mode) {
-		comms_mode = mode;
+	* @brief Write to the orca control register to change the mode of operation of the motor
+	* note some modes require a constant stream to stay in that mode (eg. force, position)
+	*/
+	void set_mode(MotorMode orca_mode) {
+		write_register(CTRL_REG_3, (uint8_t)orca_mode);
+		comms_mode = orca_mode;
 	}
-
 	/**
-	 * @brief the communication mode determines which commands are sent by enqueue_motor_frame
-	 * * 
-	 * @return CommunicationMode
-	 */
-	CommunicationMode get_mode() {
+	* @brief the communication mode determines which commands are sent by enqueue_motor_frame
+	* *
+	* @return CommunicationMode
+	*/
+	MotorMode get_mode() {
 		return comms_mode;
 	}
 
 	/**
-	* @brief Set/adjust the force that the motor is exerting 
+	* @brief Set the type of high speed stream to be sent on run out once handshake is complete
+	*/
+
+	void set_stream_mode(StreamMode mode) {
+		stream_mode = mode;
+	}
+
+	/**	
+	* @brief Get the current stream type to be sent on run out once handshake is complete
+	*/
+	StreamMode get_stream_mode() {
+		return stream_mode;
+	}
+
+	/**
+	* @brief This function can be continuously called and will update the values being sent when in motor write stream mode
+	*/
+
+	void update_write_stream(uint8_t width, uint16_t register_address, uint32_t register_value) {
+		motor_write_data = register_value;
+		motor_write_addr = register_address;
+		motor_write_width = width;
+
+	}
+
+	/**
+	* @brief This function can be continuously called and will update the values being sent when in motor read stream mode
+	*/
+	void update_read_stream(uint8_t width, uint16_t register_address) {
+		motor_read_addr = register_address;
+		motor_read_width = width;
+	}
+
+
+	/**
+	* @brief Set/adjust the force that the motor is exerting when in motor_command stream mode
 	* 
 	* @param force force, in milli-Newtons
 	*/
@@ -117,7 +178,7 @@ public:
 	}
 
 	/**
-	* @brief Set/adjust the position that the motor is aiming for
+	* @brief Set/adjust the position that the motor is aiming for when in motor command stream mode
 	* 
 	* @param position position, in micrometers
 	*/
@@ -126,6 +187,31 @@ public:
 		stream_timeout_start = modbus_client.get_system_cycles();
 	}
 
+	/**
+	* @brief Returns the total amount of force being sensed by the motor
+	*
+	* @return uint32_t - force in milli-Newtons
+	*/
+	int32_t get_force_mN() {
+		return uint32_t(orca_reg_contents[FORCE_REG_H_OFFSET] << 16) | orca_reg_contents[FORCE_REG_OFFSET];
+	}
+
+	/**
+	* @brief Returns the position of the shaft in the motor (distance from the zero position) in micrometers.
+	*
+	* @return uint32_t - position in micrometers
+	*/
+	int32_t get_position_um() {
+		return (orca_reg_contents[POS_REG_H_OFFSET] << 16) | orca_reg_contents[POS_REG_OFFSET];
+	}
+
+
+	/**
+	* @brief Enable or disabled desired haptic effects.
+	*/
+	void enable_haptic_effects(uint16_t effects) {
+		write_register(HAPTIC_STATUS, effects);
+	}
 	/**
 	 * @brief returns true when new data has been received from an actuator since the last time this function was called
 	 * 
@@ -172,12 +258,14 @@ public:
 		return failed_msg_counter;
 	}
 
+
 	void printme() { 
 #ifdef IRISCONTROLS
 		PRINTDL("am enabled ", is_enabled());
 		PRINTDL("connected state ", connection_state);
 #endif
 	}
+
 
 	/**
 	 * @brief handle the motor frame transmissions cadence
@@ -194,6 +282,7 @@ public:
 			}
 			else {
 				enqueue_motor_frame();
+
 			}
 		}
 		// This function results in the UART sending any data that has been queued
@@ -258,6 +347,38 @@ public:
 					orca_reg_contents[VOLTAGE_REG_OFFSET] 	= (response->get_rx_data()[11] << 8) | response->get_rx_data()[12];
 					orca_reg_contents[ERROR_REG_OFFSET] 	= (response->get_rx_data()[13] << 8) | response->get_rx_data()[14];
 					break;
+				
+				case motor_read: {
+					u16 register_start_address = (response->get_tx_data()[0] << 8) + response->get_tx_data()[1];
+					u8 width = response->get_tx_data()[2];
+					u16 register_data = (response->get_rx_data()[2] << 8) + response->get_rx_data()[3];
+					orca_reg_contents[register_start_address] = register_data;
+					if (width > 1) {
+						register_data = (response->get_rx_data()[0] << 8) + response->get_rx_data()[1];
+						orca_reg_contents[register_start_address + 1] = register_data;
+					}
+					orca_reg_contents[MODE_OF_OPERATION] = response->get_rx_data()[4];
+					orca_reg_contents[POS_REG_H_OFFSET] = (response->get_rx_data()[5] << 8) | response->get_rx_data()[6];
+					orca_reg_contents[POS_REG_OFFSET] = (response->get_rx_data()[7] << 8) | response->get_rx_data()[8];
+					orca_reg_contents[FORCE_REG_H_OFFSET] = (response->get_rx_data()[9] << 8) | response->get_rx_data()[10];
+					orca_reg_contents[FORCE_REG_OFFSET] = (response->get_rx_data()[11] << 8) | response->get_rx_data()[12];
+					orca_reg_contents[POWER_REG_OFFSET] = (response->get_rx_data()[13] << 8) | response->get_rx_data()[14];
+					orca_reg_contents[TEMP_REG_OFFSET] = (response->get_rx_data()[15]);
+					orca_reg_contents[VOLTAGE_REG_OFFSET] = (response->get_rx_data()[16] << 8) | response->get_rx_data()[17];
+					orca_reg_contents[ERROR_REG_OFFSET] = (response->get_rx_data()[18] << 8) | response->get_rx_data()[19];
+				}
+					break; 
+				case motor_write:
+					orca_reg_contents[MODE_OF_OPERATION] = response->get_rx_data()[0];
+					orca_reg_contents[POS_REG_H_OFFSET] = (response->get_rx_data()[1] << 8) | response->get_rx_data()[2];
+					orca_reg_contents[POS_REG_OFFSET] = (response->get_rx_data()[3] << 8) | response->get_rx_data()[4];
+					orca_reg_contents[FORCE_REG_H_OFFSET] = (response->get_rx_data()[5] << 8) | response->get_rx_data()[6];
+					orca_reg_contents[FORCE_REG_OFFSET] = (response->get_rx_data()[7] << 8) | response->get_rx_data()[8];
+					orca_reg_contents[POWER_REG_OFFSET] = (response->get_rx_data()[9] << 8) | response->get_rx_data()[10];
+					orca_reg_contents[TEMP_REG_OFFSET] = (response->get_rx_data()[11]);
+					orca_reg_contents[VOLTAGE_REG_OFFSET] = (response->get_rx_data()[12] << 8) | response->get_rx_data()[13];
+					orca_reg_contents[ERROR_REG_OFFSET] = (response->get_rx_data()[14] << 8) | response->get_rx_data()[15];
+					break;
 
 				case read_coils                   :
 				case read_discrete_inputs         :
@@ -307,21 +428,10 @@ public:
 	}
 
 	/**
-	* @brief Returns the total amount of force being sensed by the motor
-	* 
-	* @return uint32_t - force in milli-Newtons
+	*@brief get the motor's mode of operations as currently updated by the local memory map
 	*/
-	int32_t get_force_mN(){
-		return uint32_t(orca_reg_contents[FORCE_REG_H_OFFSET]<<16) | orca_reg_contents[FORCE_REG_OFFSET];
-	}
-
-	/**
-	* @brief Returns the position of the shaft in the motor (distance from the zero position) in micrometers. 
-	* 
-	* @return uint32_t - position in micrometers
-	*/
-	int32_t get_position_um(){
-		return (orca_reg_contents[POS_REG_H_OFFSET]<<16) | orca_reg_contents[POS_REG_OFFSET];
+	uint16_t get_mode_of_operation() {
+		return orca_reg_contents[MODE_OF_OPERATION];
 	}
 
 	/**
@@ -400,12 +510,30 @@ public:
 	uint16_t get_revision_number() {
 		return orca_reg_contents[REVISION_NUMBER];
 	}
+	
+	/**
+	* @brief Returns true if the motor's firmware version is 'at least as recent' as the version designated 
+	*		 by the parameters. 'At least as recent' can be thought of as a greater than or equal to comparison 
+	*		 with version being the most significant digit, revision number being second most significant, and 
+	*		 release state being the least significant.
+	*
+	* @param version - Desired major version number
+	* @param release_state - Desired release state (0 - alpha, 1 - beta, 2 - release)
+	* @param revision_number - Desired revision number
+	* @return bool - True if motor's firmware version is at least as recent as the version designated by the parameters
+	*/
+	bool version_is_at_least(uint8_t version, uint8_t release_state, uint8_t revision_number) {
+		return
+			get_major_version() > version
+			|| (get_major_version() == version && get_revision_number() > revision_number)
+			|| (get_major_version() == version && get_revision_number() == revision_number && get_release_state() >= release_state);
+	}
 
 	/**
 	 * @brief Set the zero position of the motor to be the current position 
 	 */
 	void zero_position(){
-		write_single_register_fn(connection_config.server_address, ZERO_POS_REG_OFFSET, ZERO_POS_MASK);
+		write_register(ZERO_POS_REG_OFFSET, ZERO_POS_MASK);
 	}
 
 	/**
@@ -413,7 +541,7 @@ public:
 	 * note: errors that are still found will appear again
 	 */
 	void clear_errors(){
-		write_single_register_fn(connection_config.server_address, CLEAR_ERROR_REG_OFFSET, CLEAR_ERROR_MASK);
+		write_register(CLEAR_ERROR_REG_OFFSET, CLEAR_ERROR_MASK);
 	}
 
 	/**
@@ -421,7 +549,7 @@ public:
 	 * Latched errors are errors that were found by the motor, but are no longer active (not happening anymore)
 	 */
 	void get_latched_errors(){
-		read_holding_registers_fn(connection_config.server_address, ERROR_1, 1);   
+		read_register(ERROR_1);
 	}
 
 	/**
@@ -430,7 +558,7 @@ public:
 	 * @param max_force force in milli-Newtons
 	 */
 	void set_max_force(s32 max_force){
-		write_single_register_fn(1,USER_MAX_FORCE 	,max_force);
+		write_register(USER_MAX_FORCE 	,max_force);
 	}
 
 	/**
@@ -439,7 +567,7 @@ public:
 	 * @param max_temp temperature in Celcius
 	 */
 	void set_max_temp(uint16_t max_temp){
-		write_single_register_fn(1,USER_MAX_TEMP  	,max_temp);
+		write_register(USER_MAX_TEMP  	,max_temp);
 	}
 
 	/**
@@ -448,7 +576,7 @@ public:
 	 * @param max_power power in Watts
 	 */
 	void set_max_power(uint16_t max_power){
-		write_single_register_fn(1,USER_MAX_POWER 	,max_power);
+		write_register(USER_MAX_POWER 	,max_power);
 	}
 
 	/**
@@ -457,7 +585,7 @@ public:
 	 * @param t_in_ms time period in milliseconds
 	*/
 	void set_pctrl_tune_softstart(uint16_t t_in_ms){
-		write_single_register_fn(1, PC_SOFTSTART_PERIOD,t_in_ms);
+		write_register(PC_SOFTSTART_PERIOD,t_in_ms);
 	}
 
 	/**
@@ -466,7 +594,7 @@ public:
 	 * @param max_safety_damping damping value
 	 */
 	void set_safety_damping(uint16_t max_safety_damping){
-		write_single_register_fn(1,SAFETY_DGAIN 	,max_safety_damping);
+		write_register(SAFETY_DGAIN 	,max_safety_damping);
 	}
 
 	/**
@@ -494,28 +622,8 @@ public:
 				uint8_t(sat>>16)
 		};
 
-		write_multiple_registers_fn	(1, PC_PGAIN, 6,  data);
-		write_single_register_fn	(1, CONTROL_REG_1::address, CONTROL_REG_1::position_controller_gain_set_flag);
-	}
-
-
-	/**
-	* @brief Set the motor to kinematic mode and disable high frequency stream
-	*/
-	void enable_kinematic() {
-		enabled = false; 
-		write_register(CTRL_REG_3, CONTROL_REG_3::kinematic_control_sid );
-	}
-
-	/**
-	* @brief Set the overall kinematic configuration
-	* @param num_motions number of configured motions
-	* @param trig_period when hardware triggering is enabled this will be the debounce option for the button 0 = 0 ms, 1 = 10 ms, 2 = 50 ms, 3 = 100 ms
-	* @param HW_trig Enabling of the hardware triggering option, this will prevent further modbus communication.
-	*/
-	void set_kinematic_config(int8_t num_motions, int8_t trig_period = 0, int8_t HW_trig = 0 ) {
-		uint16_t data = (trig_period << 7) | (HW_trig << 6) | (num_motions-1);
-		write_single_register_fn(1, KIN_CONFIG, data);
+		write_registers(PC_PGAIN, 6,  data);
+		write_register(CONTROL_REG_1::address, CONTROL_REG_1::position_controller_gain_set_flag);
 	}
 
 	/**
@@ -542,7 +650,7 @@ public:
 							uint8_t (0),
 							uint8_t((type<<1) | chain)
 							};
-		write_multiple_registers_fn(1, KIN_MOTION_0 + (6*ID), 6, data);
+		write_registers(KIN_MOTION_0 + (6*ID), 6, data);
 	}
 
 
@@ -552,7 +660,7 @@ public:
 	* @ID Identification of the motion to be triggered
 	*/
 	void trigger_kinematic_motion(int ID) {
-		write_single_register_fn(1, KIN_SW_TRIGGER, ID);
+		write_register(KIN_SW_TRIGGER, ID);
 	}
 
 	/**
@@ -563,6 +671,16 @@ public:
 	void read_register(uint16_t reg_address){    
 		read_holding_registers_fn(connection_config.server_address, reg_address, 1);
 	}
+	
+	/**
+	 * @brief Request for multiple sequential registers in the local copy to be updated from the motor's memory map
+	 *
+	 * @param reg_address register address from the orca's memory map
+	 * @param num_registers number of sequential registers to read
+	 */
+	void read_registers(uint16_t reg_address, uint16_t num_registers) {
+		read_holding_registers_fn(connection_config.server_address, reg_address, num_registers);
+	}
 
 	/**
 	 * @brief Request for a specific register in the motor's memory map to be updated with a given value.
@@ -572,6 +690,17 @@ public:
 	 */
 	void write_register(uint16_t reg_address, uint16_t reg_data){    
 		write_single_register_fn(connection_config.server_address, reg_address, reg_data);
+	}
+
+	/**
+	 * @brief Request for multiple registers in the motor's memory map to be updated with a given value.
+	 *
+	 * @param reg_address register address
+	 * * @param num_registers number of sequential registers to write
+	 * @param reg_data pointer to an array of data to be added to the registers
+	 */
+	void write_registers(uint16_t reg_address, uint16_t num_registers, uint8_t* reg_data) {
+		write_multiple_registers_fn(connection_config.server_address, reg_address, num_registers, reg_data);
 	}
 
 	/**
@@ -588,7 +717,8 @@ private:
 
 	uint16_t orca_reg_contents[ORCA_REG_SIZE];
 
-	CommunicationMode comms_mode = SleepMode;
+	StreamMode stream_mode = MotorCommand;
+	MotorMode comms_mode = SleepMode;
 
 	uint32_t stream_timeout_start;
 	uint32_t stream_timeout_cycles = 100000 * my_cycle_per_us;
@@ -598,21 +728,29 @@ private:
 	// Used to hold the last commanded force and position commands from the user of this object
 	int32_t force_command;
 	int32_t position_command;
+	uint32_t haptic_command;
+	//Used to hold the last data to stream in motor write and read streams
+	uint32_t motor_write_data = 0;
+	uint16_t motor_write_addr = 0;
+	uint16_t motor_write_width = 1;
+	uint16_t motor_read_addr = 0;
+	uint16_t motor_read_width = 1;
+
+
 
 	// These counters are used to find the success and failure rate of the comms
 	int32_t success_msg_counter = 0, failed_msg_counter = 0;
-
 
 	/**
 	 * @brief Requests the actuator synchronize its memory map with the controller
 	 */
 	void synchronize_memory_map() override {
-		read_holding_registers_fn(1, PARAM_REG_START     	, PARAM_REG_SIZE     			) ;
-		read_holding_registers_fn(1, ERROR_0				, ADC_DATA_COLLISION-ERROR_0	) ;
-		read_holding_registers_fn(1, STATOR_CAL_REG_START	, STATOR_CAL_REG_SIZE			) ;
-		read_holding_registers_fn(1, SHAFT_CAL_REG_START 	, SHAFT_CAL_REG_SIZE 			) ;
-		read_holding_registers_fn(1, FORCE_CAL_REG_START 	, FORCE_CAL_REG_SIZE 			) ;
-		read_holding_registers_fn(1, TUNING_REG_START    	, TUNING_REG_SIZE    			) ;
+		read_registers(PARAM_REG_START     	, PARAM_REG_SIZE     			) ;
+		read_registers(ERROR_0				, ADC_DATA_COLLISION-ERROR_0	) ;
+		read_registers(STATOR_CAL_REG_START	, STATOR_CAL_REG_SIZE			) ;
+		read_registers(SHAFT_CAL_REG_START 	, SHAFT_CAL_REG_SIZE 			) ;
+		read_registers(FORCE_CAL_REG_START 	, FORCE_CAL_REG_SIZE 			) ;
+		read_registers(TUNING_REG_START    	, TUNING_REG_SIZE    			) ;
 	}
 
 	/**
@@ -623,21 +761,13 @@ private:
 			orca_reg_contents[i] = 0;
 		}
 	}
-
-	/**
-	 * @brief enqueue a motor message if the queue is empty
-	 */
-	void enqueue_motor_frame() {
-
-
-		if(modbus_client.get_queue_size() >= 2) return;
-
-		switch(comms_mode){
-		case SleepMode:
-			motor_command_fn(connection_config.server_address, 0, 0); //any register address other than force or position register_adresses will induce sleep mode and provided register_value will be ignored
-			break;
+#define KIN_CMD 32 // Number that indicates a kinematic type motor frame. Not an actual register like POS_CMD and FORCE_CMD
+#define HAP_CMD 34
+	void motor_stream_command() {
+		switch (comms_mode) {
+			;
 		case ForceMode: {
-			if(uint32_t(modbus_client.get_system_cycles() - stream_timeout_start) > stream_timeout_cycles){		//return to sleep mode if stream timed out
+			if (uint32_t(modbus_client.get_system_cycles() - stream_timeout_start) > stream_timeout_cycles) {		//return to sleep mode if stream timed out
 				comms_mode = SleepMode;
 			}
 			else {
@@ -646,22 +776,49 @@ private:
 			break;
 		}
 		case PositionMode:
-			if(!POS_CTRL){
-				return;
-			}
-
-			if(uint32_t(modbus_client.get_system_cycles() - stream_timeout_start) > stream_timeout_cycles){   //return to sleep mode if stream timed out
+			if (uint32_t(modbus_client.get_system_cycles() - stream_timeout_start) > stream_timeout_cycles) {   //return to sleep mode if stream timed out
 				comms_mode = SleepMode;
 			}
 			else {
 				motor_command_fn(connection_config.server_address, POS_CMD, position_command);
 			}
 			break;
-		//case KinematicMode:
-		//		motor_command_fn(connection_config.server_address, 32, 0);
-		//	break;
+		case KinematicMode:
+			motor_command_fn(connection_config.server_address, KIN_CMD, 0);
+			break;
+		case HapticMode:
+			motor_command_fn(connection_config.server_address, HAP_CMD, 0);
+			break;
+		default:
+			motor_command_fn(connection_config.server_address, 0, 0); //any register address other than force or position register_adresses will induce sleep mode and provided register_value will be ignored
+			break;
 		}
+	}
 
+	void motor_stream_read() {
+		motor_read_fn(connection_config.server_address, motor_read_width, motor_read_addr);
+	}
+
+	void motor_stream_write() {
+		motor_write_fn(connection_config.server_address, motor_write_width, motor_write_addr, motor_write_data);
+	}
+
+	/**
+	 * @brief enqueue a motor message if the queue is empty
+	 */
+	void enqueue_motor_frame() {
+		if(modbus_client.get_queue_size() >= 2) return;
+		switch (stream_mode) {
+		case MotorCommand:
+			motor_stream_command();
+			break;
+		case MotorRead:
+			motor_stream_read();
+			break;
+		case MotorWrite:
+			motor_stream_write();
+			break;
+		}
 	}
 
 	/**
@@ -674,6 +831,10 @@ private:
 		switch(fn_code){
 		case motor_command:
 			return 19;
+		case motor_read:
+			return 24;
+		case motor_write:
+			return 20;
 		default:
 			return -1;
 		}
@@ -683,18 +844,21 @@ private:
       @brief Enum of all actuator specific function codes, in decimal.
 	 */
 	enum orca_function_codes_e {
-		motor_command = 100
+		motor_command = 100,
+		motor_read = 104,
+		motor_write = 105
 	};
 
 	/**
-      @brief Format a motor command request, function code 65, and add the request to the buffer queue
+      @brief Format a motor command request, function code 0x64, and add the request to the buffer queue
 
       @param device_address Server device address
-      @param register_address The address of the register to be written to
+      @param command_code command code to specify command mode (sleep, force, position etc.)
       @param register_value The value to write to the register
 	 */
-	int motor_command_fn(uint8_t device_address, uint8_t register_address, int32_t register_value) {
-		uint8_t data_bytes[5] = { uint8_t(register_address),
+	int motor_command_fn(uint8_t device_address, uint8_t command_code, int32_t register_value) {
+		uint8_t data_bytes[5] = { 
+				uint8_t(command_code),
 				uint8_t(register_value >> 24),
 				uint8_t(register_value >> 16),
 				uint8_t(register_value >> 8),
@@ -705,6 +869,37 @@ private:
 		my_temp_transaction.reset_transaction();
 		return check;
 	}
+
+	int motor_read_fn(uint8_t device_address, uint8_t width, uint16_t register_address) {
+		uint8_t data_bytes[3] = {
+				uint8_t(register_address>>8), 
+				uint8_t(register_address),
+				uint8_t(width)
+		};
+
+		my_temp_transaction.load_transmission_data(device_address, motor_read, data_bytes, 3, get_app_reception_length(motor_read));
+		int check = modbus_client.enqueue_transaction(my_temp_transaction);
+		my_temp_transaction.reset_transaction();
+		return check;
+	}
+
+	int motor_write_fn(uint8_t device_address, uint8_t width, uint16_t register_address, uint32_t register_value) {
+		uint8_t data_bytes[7] = {
+				uint8_t(register_address >> 8),
+				uint8_t(register_address),
+				uint8_t(width),
+				uint8_t(register_value >> 24),
+				uint8_t(register_value >> 16),
+				uint8_t(register_value >> 8),
+				uint8_t(register_value)
+		};
+
+		my_temp_transaction.load_transmission_data(device_address, motor_write, data_bytes, 7, get_app_reception_length(motor_write));
+		int check = modbus_client.enqueue_transaction(my_temp_transaction);
+		my_temp_transaction.reset_transaction();
+		return check;
+	}
+
 
 	////////////////////////////////////////////////////////////////////
 };

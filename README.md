@@ -14,6 +14,7 @@ The best place to get started is to read the SDK for Windows Quickstart Guide, w
 The Orca API User Manual describes how to command the Orca motor using the Actuator object that abstracts MODBUS communications.
 
 This repo contains the following:
+IrisSDK Orca API: contains all the functions from the library that will be used to communicate with a motor 
 Quickstart Guide: A guide on setting up the development environment and connecting a motor. 
 Examples: pre written projects that demostrate features of IrisControls4 and this SDK.
 IrisControls4: the Windows-based user-interface application used by Iris Dynamics Ltd. devices to present controls and data over USB. 
@@ -27,12 +28,11 @@ Virtual Comport Setup: Setup program to set up com0com, the virtual comport util
 
 We recommend you begin by following instructions in the Quickstart Guide. 
 
-##Cloning the Repo 
+## Cloning the Repo 
 If you do not have GIT Bash on your machine, download and install it from https://git-scm.com/downloads 
 Right click in the directory you would like to clone this repository into and select 'Git Bash Here'/ 
 To clone this repo with all of the inlcuded submodules type the git bash command: 
 <code>git clone https://github.com/IrisDynamics/IrisSDK_for_Windows</code>
-
 
 ## Good Luck!
 We look forward to your feedback and hope this gets you on the path to success with our technology :)

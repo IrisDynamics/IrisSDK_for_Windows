@@ -51,7 +51,7 @@ void IrisControls4::handshakeResponse(u64 now, uint8_t crc_result) {
 	print_i(now);
 	print_i(IC4_virtual->timeout_timer); //timeout timer
 	print_i(crc_result);
-	print_c((char)EOT_CHAR);
+	print_c((char)END_OF_TRANSMISSION);
 }
 
 /**
@@ -92,7 +92,7 @@ void IrisControls4::gui_set_grid(u16 num_rows, u16 num_columns){
 */
 void IrisControls4::gui_query_max_grid(){
 	begin_tx_frame(); //STX char
-	print_c(char(QUERY_MAX_GRID));
+	print_c(char(QUERY_MAX_ROWS_COLS));
 	end_tx_frame();
 }
 
@@ -124,7 +124,7 @@ void IrisControls4::inject_delay(u16 delay_length){
 */
 void IrisControls4::end_of_frame(){	
 	begin_tx_frame(); //STX char
-	print_c(char(EOT_CHAR));
+	print_c(char(END_OF_TRANSMISSION));
 	end_tx_frame();
 
 	refresh_timeout();
@@ -222,7 +222,7 @@ void IrisControls4::set_main_window_title(const char * new_title){
 /**
 * @brief Sets/alters the config of the GUI Thing
 */
-void IrisControls4::gui_thing_config(u32 index, u16 config){
+void IrisControls4::gui_thing_config(u32 index, u32 config){
 	begin_tx_frame(); //STX char
 	print_c(char(CONFIG_ELEMENT));
 	print_i(index);
@@ -234,10 +234,11 @@ void IrisControls4::gui_thing_config(u32 index, u16 config){
 /**
 * @brief Adds a new GUI Page.
 */
-void IrisControls4::gui_page_add(u32 index) {
+void IrisControls4::gui_page_add(u32 index, u32 parent_index) {
 	begin_tx_frame();	//STX char
 	print_c(char(ADD_GUI_PAGE));
 	print_i(index);
+	print_i(parent_index);
 	end_tx_frame();
 }
 
@@ -293,6 +294,28 @@ void IrisControls4::gui_page_remove_element(u32 index, u32 element_index) {
 	end_tx_frame();
 }
 
+/**
+* @brief Adds a child GUI_Page to the GUI Page.
+*/
+void IrisControls4::gui_page_add_page(u32 index, u32 page_index) {
+	begin_tx_frame();	//STX char
+	print_c(char(ADD_CHILD_PAGE_TO_PAGE));
+	print_i(index);
+	print_i(page_index);
+	end_tx_frame();
+}
+
+/**
+* @brief Removes a child GUI_Page from the GUI Page.
+*/
+void IrisControls4::gui_page_remove_page(u32 index, u32 page_index) {
+	begin_tx_frame();	//STX char
+	print_c(char(REMOVE_CHILD_PAGE_FROM_PAGE));
+	print_i(index);
+	print_i(page_index);
+	end_tx_frame();
+}
+
 ///////////////////////////////////////// flex_element Implementation //////////////////////////////////
 /**
 * @brief Hides the FlexElement with id index
@@ -331,7 +354,7 @@ void IrisControls4::flexElement_move(u32 index, u16 row, u16 column){
 */
 void IrisControls4::flexElement_remove(u32 index){
 	begin_tx_frame(); //STX char
-	print_c(char(DELETE_ELEMENT));
+	print_c(char(REMOVE_ELEMENT));
 	print_i(index);
 	end_tx_frame();
 }
@@ -430,7 +453,7 @@ void IrisControls4::flexButton_add(u32 parent_id, u32 index, const char * name, 
 	#ifdef BYTE_STUFFING_PARSING
 	begin_tx_frame();
 	#endif
-	print_c(char(ADD_FLEXBUTTON)); //20 is add flexbutton
+	print_c(char(FLEXBUTTON_ADD)); //20 is add flexbutton
 	print_s(name);
 	print_i(parent_id);
 	print_i(index);
@@ -447,7 +470,7 @@ void IrisControls4::flexButton_add(u32 parent_id, u32 index, const char * name, 
 */
 void IrisControls4::flexButton_set_checked(u32 index, int t){
 	begin_tx_frame();	//STX char
-	print_c(char(CHECK_FLEXBUTTON));
+	print_c(char(FLEXBUTTON_CHECK));
 	print_i(index);
 	print_i(t);
 	end_tx_frame();
@@ -458,7 +481,7 @@ void IrisControls4::flexButton_set_checked(u32 index, int t){
 /**
 * @brief Adds a new Flex Slider (or alters and then shows an existing one)
 */
-void IrisControls4::flexSlider_add(u32 parent_id, u32 index, int total_factor, const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, const char* units, u16 config){
+void IrisControls4::flexSlider_add(u32 parent_id, u32 index, int total_factor, const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int min, int max, int initValue, const char* units, u32 config){
 	#ifdef MESSAGE_LENGTH_PARSING
 	u16 message_size = size_of_string(name);
 	message_size 	+= size_of_string(units);
@@ -467,7 +490,7 @@ void IrisControls4::flexSlider_add(u32 parent_id, u32 index, int total_factor, c
 	#ifdef BYTE_STUFFING_PARSING
 	begin_tx_frame();
 	#endif
-	print_c(char(ADD_FLEXSLIDER));
+	print_c(char(FLEXSLIDER_ADD));
 	print_i(parent_id);
 	print_i(index);
 	print_s(name);
@@ -502,7 +525,7 @@ void IrisControls4::flexSlider_set_range(u32 index, int min, int max) {
 /**
 * @brief Adds a new Flex Label (or alters and then shows an existing one)
 */
-void IrisControls4::flexLabel_add(u32 parent_id, u32 index, const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u16 config){
+void IrisControls4::flexLabel_add(u32 parent_id, u32 index, const char * name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u32 config){
 	#ifdef MESSAGE_LENGTH_PARSING
 	u16 message_size = size_of_string(name);
 	begin_tx_frame(message_size);
@@ -510,7 +533,7 @@ void IrisControls4::flexLabel_add(u32 parent_id, u32 index, const char * name, u
 	#ifdef BYTE_STUFFING_PARSING
 	begin_tx_frame();
 	#endif
-	print_c(char(ADD_FLEXLABEL));
+	print_c(char(FLEXLABEL_ADD));
 	print_i(parent_id);
 	print_i(index);
 	print_s(name);
@@ -527,7 +550,7 @@ void IrisControls4::flexLabel_add(u32 parent_id, u32 index, const char * name, u
 /**
 * @brief Adds a new Flex Data (or alters and then shows an existing one)
 */
-void IrisControls4::flexData_add(u32 parent_id, u32 index, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, const char * units, int total_factor, u16 config){
+void IrisControls4::flexData_add(u32 parent_id, u32 index, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, int initValue, const char * units, int total_factor, u32 config){
 	#ifdef MESSAGE_LENGTH_PARSING
 	u16 message_size = 	size_of_string(name);
 	message_size 	+= 	size_of_string(units);
@@ -536,7 +559,7 @@ void IrisControls4::flexData_add(u32 parent_id, u32 index, const char* name, u16
 	#ifdef BYTE_STUFFING_PARSING
 	begin_tx_frame();
 	#endif
-	print_c(char(ADD_FLEXDATA));
+	print_c(char(FLEXDATA_ADD));
 	print_i(parent_id);
 	print_i(index);
 	print_s(name);
@@ -551,12 +574,59 @@ void IrisControls4::flexData_add(u32 parent_id, u32 index, const char* name, u16
 	end_tx_frame();
 }
 
+////////////////////////////////////////////FlexDropdown Implementation///////////////////////
+/**
+* @brief Adds a new Flex Dropdown (or alters and then shows an existing one)
+*/
+void IrisControls4::flexDropdown_add(u32 parent_id, u32 index, u16 row, u16 column, u16 rowSpan, u16 columnSpan, u32 config) {
+	begin_tx_frame();
+	print_c(char(FLEXDROPDOWN_ADD));
+	print_i(parent_id);
+	print_i(index);
+	print_i(row);
+	print_i(column);
+	print_i(rowSpan);
+	print_i(columnSpan);
+	print_i(config);
+	end_tx_frame();
+}
+
+/**
+* @brief Adds an option to a Flex Dropdown
+*/
+void IrisControls4::flexDropdown_add_option(u32 index, u32 option_id, const char* label) {
+	#ifdef MESSAGE_LENGTH_PARSING
+	u16 message_size = size_of_string(label);
+	begin_tx_frame(message_size);
+	#endif
+	#ifdef BYTE_STUFFING_PARSING
+	begin_tx_frame();
+	#endif
+	print_c(char(FLEXDROPDOWN_ADD_OPTION));
+	print_i(index);
+	print_i(option_id);
+	print_s(label);
+	end_tx_frame();
+}
+
+/**
+* @brief Removes an option from a Flex Dropdown
+*/
+void IrisControls4::flexDropdown_remove_option(u32 index, u32 option_id) {
+	begin_tx_frame();
+	print_c(char(FLEXDROPDOWN_REMOVE_OPTION));
+	print_i(index);
+	print_i(option_id);
+	end_tx_frame();
+}
+
+
 ////////////////////////////////////////////FlexPlot Implementation///////////////////////
 
 /**
 * @brief Adds a new Flex Plot (or alters and then shows an existing one)
 */
-void IrisControls4::flexPlot_add(u32 parent_id, u32 index, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, float min, float max, u16 config){
+void IrisControls4::flexPlot_add(u32 parent_id, u32 index, const char* name, u16 row, u16 column, u16 rowSpan, u16 columnSpan, float min, float max, u32 config){
 	#ifdef MESSAGE_LENGTH_PARSING
 	u16 message_size = size_of_string(name);
 	begin_tx_frame(message_size);
@@ -564,7 +634,7 @@ void IrisControls4::flexPlot_add(u32 parent_id, u32 index, const char* name, u16
 	#ifdef BYTE_STUFFING_PARSING
 	begin_tx_frame();
 	#endif
-	print_c(char(ADD_FLEXPLOT));
+	print_c(char(FLEXPLOT_ADD));
 	print_i(parent_id);
 	print_i(index);
 	print_s(name);
@@ -641,7 +711,7 @@ void IrisControls4::flexPlot_set_axes_labels(u32 flexplot_index, u32 dataset_ind
 /**
 * @brief Adds a new Dataset (or alters and then shows an existing one)
 */
-void IrisControls4::dataset_add(u32 dataset_id, u32 plot_id, const char * name, const char * x_label, const char * y_label, u16 config){
+void IrisControls4::dataset_add(u32 dataset_id, u32 plot_id, const char * name, const char * x_label, const char * y_label, u32 config){
 	#ifdef MESSAGE_LENGTH_PARSING
 	u16 message_size = size_of_string(name);
 	message_size 	+= size_of_string(x_label);
@@ -651,7 +721,7 @@ void IrisControls4::dataset_add(u32 dataset_id, u32 plot_id, const char * name, 
 	#ifdef BYTE_STUFFING_PARSING
 	begin_tx_frame();
 	#endif
-	print_c(char(ADD_DATASET));
+	print_c(char(DATASET_ADD));
 	print_i(dataset_id);
 	print_i(plot_id);
 	print_s(name);
@@ -677,7 +747,7 @@ void IrisControls4::dataset_set_max_data_points	(u32 index, u32 number_of_data_p
 */
 void IrisControls4::dataset_remove(u32 index){
 	begin_tx_frame();
-	print_c(char(REMOVE_DATASET));
+	print_c(char(DATASET_REMOVE));
 	print_i(index);
 	end_tx_frame();
  }
@@ -693,7 +763,7 @@ void IrisControls4::dataset_add_float_data(u32 index, u16 dataPairs, float xData
 	#ifdef BYTE_STUFFING_PARSING
 	begin_tx_frame();
 	#endif
-	print_c(char(ADD_FLOAT_DATA_TO_DATASET));
+	print_c(char(DATASET_ADD_FLOAT_DATA));
 	print_i(index);
 	print_i(int(dataPairs));
 	for ( u16 i=0 ; i<dataPairs ; i++ ){
@@ -707,19 +777,30 @@ void IrisControls4::dataset_add_float_data(u32 index, u16 dataPairs, float xData
 */
 void IrisControls4::dataset_add_int_data(u32 index, int xData, int yData){
 	begin_tx_frame();
-	print_c(char(ADD_INT_DATA_TO_DATASET));
+	print_c(char(DATASET_ADD_INT_DATA));
 	print_i(index);
 	print_i(xData);
 	print_i(yData);
 	end_tx_frame();
 }
 
+#ifndef WINDOWS
+void IrisControls4::dataset_add_int_data(u32 index, s32 xData, s32 yData){
+	begin_tx_frame();
+	print_c(char(DATASET_ADD_INT_DATA));
+	print_i(index);
+	print_i(xData);
+	print_i(yData);
+	end_tx_frame();
+}
+#endif
+
 /**
 * @brief Adds an  integer data point to a Dataset with a u64 xData input
 */
 void IrisControls4::dataset_add_int_data(u32 index, u64 xData, int yData){
 	begin_tx_frame();
-	print_c(char(ADD_TIME_DATA_TO_DATASET));
+	print_c(char(DATASET_ADD_TIME_DATA));
 	print_i(index);
 	print_i(xData);
 	print_i(yData);
@@ -751,7 +832,7 @@ void IrisControls4::dataset_show(u32 index){
 */
 void IrisControls4::dataset_purge(u32 index){
 	begin_tx_frame();
-	print_c(char(PURGE_DATASET));
+	print_c(char(DATASET_PURGE_DATA));
 	print_i(index);
 	end_tx_frame();
 }
@@ -761,7 +842,7 @@ void IrisControls4::dataset_purge(u32 index){
 */
 void IrisControls4::dataset_assign(u32 dataset_index, u32 flexplot_index){
 	begin_tx_frame();
-	print_c(char(ASSIGN_DATASET));
+	print_c(char(DATASET_ASSIGN));
 	print_i(dataset_index);
 	print_i(flexplot_index);
 	end_tx_frame();
@@ -772,7 +853,7 @@ void IrisControls4::dataset_assign(u32 dataset_index, u32 flexplot_index){
 */
 void IrisControls4::dataset_unassign(u32 index){
 	begin_tx_frame();
-	print_c(char(UNASSIGN_DATASET));
+	print_c(char(DATASET_UNASSIGN));
 	print_i(index);
 	end_tx_frame();
  }
@@ -795,7 +876,7 @@ void IrisControls4::dataset_set_colour(u32 index, u16 r, u16 g, u16 b, u16 a){
 ////////////////////////////////////////////Dataset Implementation///////////////////////
 
 /**
- * @brief Add a new DataLog
+ * @brief Add a new DataLog.
  */
 void IrisControls4::datalog_add(u32 index, const char * name){
 	#ifdef MESSAGE_LENGTH_PARSING
@@ -805,14 +886,14 @@ void IrisControls4::datalog_add(u32 index, const char * name){
 	#ifdef BYTE_STUFFING_PARSING
 	begin_tx_frame();
 	#endif
-	print_c(char(ADD_LOGGER));
+	print_c(char(LOG_ADD));
 	print_i(index);
 	print_s(name);
 	end_tx_frame();
 }
 
 /**
- * @brief Writes to an existing DataLog
+ * @brief Writes to an existing DataLog.
  */
 void IrisControls4::datalog_write(u32 index, const char * string){
 	#ifdef MESSAGE_LENGTH_PARSING
@@ -822,9 +903,19 @@ void IrisControls4::datalog_write(u32 index, const char * string){
 	#ifdef BYTE_STUFFING_PARSING
 	begin_tx_frame();
 	#endif
-	print_c(char(WRITE_LOGGER));
+	print_c(char(LOG_WRITE));
 	print_i(index);
 	print_s(string);
+	end_tx_frame();
+}
+
+/**
+* @brief Closes an existing DataLog.
+*/
+void IrisControls4::datalog_close(u32 index) {
+	begin_tx_frame();
+	print_c(char(LOG_CLOSE));
+	print_i(index);
 	end_tx_frame();
 }
 

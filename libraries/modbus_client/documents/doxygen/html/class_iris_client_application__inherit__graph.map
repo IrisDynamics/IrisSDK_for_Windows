@@ -1,6 +1,0 @@
-<map id="IrisClientApplication" name="IrisClientApplication">
-<area shape="rect" id="node1" title="Establishes a Modbus connection status between a client and server device." alt="" coords="37,80,173,107"/>
-<area shape="rect" id="node3" href="$class_actuator.html" title="Object that abstracts the communications between the client and a Orca motor server." alt="" coords="5,155,76,181"/>
-<area shape="rect" id="node4" href="$class_pneumatic_controller.html" title=" " alt="" coords="101,155,239,181"/>
-<area shape="rect" id="node2" href="$class_modbus_client_application.html" title="Base implementation of a Modbus client application layer." alt="" coords="22,5,187,32"/>
-</map>

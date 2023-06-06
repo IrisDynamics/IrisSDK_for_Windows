@@ -30,7 +30,7 @@
 /**
     @file Comport_Select.h
     @class Comport_Select
-    @brief Small panel for displaying comport selection elements this is only relevant when using windows as the client
+    @brief Small panel for displaying comport selection elements
 */
 class Comport_Select {
 
@@ -104,12 +104,15 @@ public:
             //initiate and add the flex slider
             if (num_motors > 1) {
                 
-                motor_slider.add(panel_elements, "View Motor:", row_anchor + 3, column_anchor, 2, 30, 0, (num_motors-1), (num_motors-1), 1, FlexSlider::NOT_TRACKING + FlexSlider::ALLOW_INPUT + FlexSlider::UNITS);
+                motor_slider.add(panel_elements, "View Motor:", row_anchor + 3, column_anchor, 2, 30, 0, (num_motors-1),0, 1, FlexSlider::NOT_TRACKING + FlexSlider::ALLOW_INPUT + FlexSlider::UNITS);
                 see_slider = true;
 
             }
 
             disable_btn.add(panel_elements, "Disable", -1, row_anchor, column_anchor + 26, 2, 4);
+
+            reset_comport_selector();
+
             first_setup = false;
         }
 
@@ -143,13 +146,7 @@ public:
             new_motor_port = new_port;
 
             // com port 1 is reserved on windows so cannot be used as actuator port
-            if (new_port != 1) {
-                //make a new motor connection
-                new_motor_connection();
-            }
-            else {
-                IC4_virtual->print_l("Unable to open a connection to a motor on port 1\r");
-            }
+            new_motor_connection();
             
         }
         if (see_slider &&(last_slider_value != get_position())) {
@@ -175,7 +172,7 @@ public:
         motors[motor_id].init();
 
         //check to make sure the new actuator creation was successful
-        if (motors[motor_id].modbus_client.serial_success && !(new_motor_port == motors[motor_id].modbus_client.get_port_number() && motors[motor_id].is_connected())) {
+        if (motors[motor_id].modbus_client.connection_state() && !(new_motor_port == motors[motor_id].modbus_client.get_port_number() && motors[motor_id].is_connected())) {
 
             // Print connection success message
             IC4_virtual->print_l("Connecting motor on port ");
@@ -184,7 +181,7 @@ public:
 
             // enable connected motor
             motors[motor_id].enable();
-
+            conn_button.disable(1);
         }
         else {
             //motor serial port connection fail
@@ -205,7 +202,7 @@ public:
     void disable_connection() {
         motor_id = get_position();
 
-        if (motors[motor_id].is_connected()) {
+        if (motors[motor_id].modbus_client.connection_state()) {
 
             // Print delete message
             IC4_virtual->print_l("Disabling motor on port ");
@@ -215,7 +212,7 @@ public:
             //disable comms for this actuator object
             motors[motor_id].disable();
             motors[motor_id].disable_comport();
-
+            conn_button.disable(0);
         }
     }
 

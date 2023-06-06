@@ -1,6 +1,0 @@
-<map id="ModbusClientApplication" name="ModbusClientApplication">
-<area shape="rect" id="node1" title="Base implementation of a Modbus client application layer." alt="" coords="47,184,213,211"/>
-<area shape="rect" id="node2" href="$class_transaction.html" title="MODBUS RTU frame object for outgoing and respective incoming requests." alt="" coords="5,95,95,121"/>
-<area shape="rect" id="node3" href="$class_modbus_client.html" title="Modbus client serial communication virtual class. To be implemented by device drivers." alt="" coords="159,95,261,121"/>
-<area shape="rect" id="node4" href="$class_message_queue.html" title="An array implemented queue of MODBUS RTU frame objects for sequential transmittion of commands to rem..." alt="" coords="153,5,267,32"/>
-</map>
