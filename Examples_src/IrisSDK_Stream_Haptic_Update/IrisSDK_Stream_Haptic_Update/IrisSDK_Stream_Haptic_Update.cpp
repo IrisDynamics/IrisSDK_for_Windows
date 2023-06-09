@@ -37,6 +37,10 @@
 #define NUM_MOTORS 2
 Actuator motor[NUM_MOTORS]{ {0, "orca 0", 1}, {0, "orca 1", 1} };
 //IrisControls4* IC4_virtual;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ********UPDATA THESE TO YOUR RS422 PORT VALUES ensure they have been updated to have com port latency to 1 ms*******/////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 u16 port_number[NUM_MOTORS] = { 81 , 74 }; //In this case these values have been hardcoded but if the port values are not consistent 
                                       //they can be adjusted before initializing the object as needed
 //!< custom communication settings for baud rate and interframe delay to allow faster communication than modbus protocol
