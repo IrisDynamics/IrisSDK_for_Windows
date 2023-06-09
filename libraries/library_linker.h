@@ -24,6 +24,8 @@
 #define LIBARY_LINKER_H_
 
 #include "modbus_client/transaction.cpp"
+#include "irisSDK_libraries/Signal_Generator.cpp"
+#ifdef IRISCONTROLS
 #include "ic4_library/console_message_parser.cpp"
 #include "ic4_library/io_elements.cpp"
 #include "ic4_library/ic_app.cpp"
@@ -33,7 +35,6 @@
 #include "irisSDK_libraries/Motor_Control_Panel.cpp"
 #include "irisSDK_libraries/Motor_Plot_Panel.cpp"
 #include "irisSDK_libraries/Signal_Panel.cpp"
-#include "irisSDK_libraries/Signal_Generator.cpp"
-
+#endif
 
 #endif /* LIBARY_LINKER_H_ */

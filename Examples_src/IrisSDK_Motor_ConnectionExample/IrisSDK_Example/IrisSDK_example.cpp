@@ -20,6 +20,7 @@
     For questions or feedback on this file, please email <support@irisdynamics.com>.
 */
 
+#define IRISCONTROLS
 
 #include "windows_gui.h"        //Custom Iris Controls GUI interface 
 #include "ic4_library/iriscontrols4.h"      //Iris Controls library (GUI handling)
@@ -41,28 +42,6 @@ IrisControls4* IC4_virtual = &test_gui;
 
 bool flag = true;
 int ic_port_number;
-
-/** @brief Allows for a delay so that the processor isn't being spammed  */
-void delayMicroSeconds(float microseconds)
-{
-    __int64 timeEllapsed;
-    __int64 timeStart;
-    __int64 timeDelta;
-
-    QueryPerformanceFrequency((LARGE_INTEGER*)(&timeDelta));
-
-    __int64 timeToWait = (double)timeDelta * (double)microseconds / 1000000.0f;
-
-    QueryPerformanceCounter((LARGE_INTEGER*)(&timeStart));
-
-    timeEllapsed = timeStart;
-
-    while ((timeEllapsed - timeStart) < timeToWait)
-    {
-        QueryPerformanceCounter((LARGE_INTEGER*)(&timeEllapsed));
-
-    };
-}
 
 /** @brief Main is called when the program begins - functions as the main project loop */
 

@@ -259,14 +259,6 @@ public:
 	}
 
 
-	void printme() { 
-#ifdef IRISCONTROLS
-		PRINTDL("am enabled ", is_enabled());
-		PRINTDL("connected state ", connection_state);
-#endif
-	}
-
-
 	/**
 	 * @brief handle the motor frame transmissions cadence
 	 * @
@@ -653,6 +645,42 @@ public:
 		write_registers(KIN_MOTION_0 + (6*ID), 6, data);
 	}
 
+	/** @brief update the spring effect in a single function
+	*/
+	void set_spring_effect(u8 spring_id, u16 gain, u32 center, u16 dead_zone = 0, u16 saturation = 0, u8 coupling = 0) {
+		u8 data[12] = {
+			u8(gain >> 8),
+			u8(gain),
+			u8(center >> 8),
+			u8(center),
+			u8(center >> 24),
+			u8(center >> 16),
+			u8(0),
+			u8(coupling),
+			u8(dead_zone >> 8),
+			u8(dead_zone),
+			u8(saturation >> 8),
+			u8(saturation),
+			
+		};
+		write_registers(S0_GAIN_N_MM + spring_id * 6, 6, data);
+	}
+
+	/**
+	*/
+	void set_osc_effect(u8 osc_id, u16 amplitude, u16 frequency_dhz, u16 duty, u16 type) {
+		u8 data[8] = {
+			u8(amplitude >> 8),
+			u8(amplitude),
+			u8(type >> 8),
+			u8(type),
+			u8(frequency_dhz >> 8),
+			u8(frequency_dhz),
+			u8(duty >> 8),
+			u8(duty)
+		};
+		write_registers(O0_GAIN_N + osc_id * 4, 4, data);
+	}
 
 
 	/**

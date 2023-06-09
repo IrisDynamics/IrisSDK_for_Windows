@@ -22,6 +22,7 @@
 
 #pragma once
 #define WINDOWS
+#include "windows.h"
 
 #ifdef IRIS_ZYNQ_7000
 #define millis() 0

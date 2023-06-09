@@ -20,6 +20,7 @@
 
     For questions or feedback on this file, please email <support@irisdynamics.com>.
 */
+#define IRISCONTROLS //allows for the use of iris controls libraries to create guis using the iriscontrols API
 
 // Include addional SDK libraries and files within this project
 #include <ic4_library/iriscontrols4.h>      // Iris controls 4 library (GUI Handling)

@@ -67,7 +67,7 @@ public:
     */
     struct ConnectionConfig{
         uint8_t server_address        = 1;
-        int req_num_discovery_pings   = 15; //3      //number of sucessful comms check messages required to move to next step in handshake sequence
+        int req_num_discovery_pings   = 3; //3      //number of sucessful comms check messages required to move to next step in handshake sequence
         int max_consec_failed_msgs    = 5;      //number of failed/missed messages to trigger disconnect
         uint32_t target_baud_rate_bps = 625000;
         uint16_t target_delay_us      = 80;

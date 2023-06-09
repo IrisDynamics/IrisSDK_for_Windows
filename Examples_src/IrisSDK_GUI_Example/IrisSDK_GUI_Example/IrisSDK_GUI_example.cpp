@@ -19,6 +19,7 @@
 
     For questions or feedback on this file, please email <support@irisdynamics.com>.
 */
+#define IRISCONTROLS
 
 #include "ic4_library/iriscontrols4.h"      //Iris Controls library (GUI handling)
 #include "library_linker.h"     //File for linking function implementations for libraries 

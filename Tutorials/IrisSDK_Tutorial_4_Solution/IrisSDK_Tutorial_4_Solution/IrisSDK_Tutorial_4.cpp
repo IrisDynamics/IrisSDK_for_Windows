@@ -19,7 +19,7 @@
 
     For questions or feedback on this file, please email <support@irisdynamics.com>.
 */
-
+#define IRISCONTROLS //allows for the use of iris controls libraries to create guis using the iriscontrols API
 
 // Include addional SDK libraries and files within this project
 #include <ic4_library/iriscontrols4.h>      // Iris controls 4 library (GUI Handling)
@@ -62,7 +62,7 @@ int main() {
     IC4_virtual->setup(ic_port_number);
 
     //set up motor config
-    motors[0].connection_config.target_baud_rate_bps = 1040000;
+    motors[0].connection_config.target_baud_rate_bps = 1250000;
     motors[0].connection_config.target_delay_us = 0;
     motors[0].set_connection_config(motors[0].connection_config);
 

@@ -1,5 +1,6 @@
 /**
-    3 motor example
+    Haptics Stream
+    @brief This project is intended to make use of different stream modes and making use of motor haptic effects
 
     @author Rebecca McWilliam <rmcwilliam@irisdynamics.com>
     @version 1.1
@@ -19,6 +20,7 @@
 
     For questions or feedback on this file, please email <support@irisdynamics.com>.
 */
+#define IRISCONTROLS
 
 #include "iris_gui.h"   //Custom Iris control GUI interface 
 #include "ic4_library/iriscontrols4.h"      //Iris Controls library (GUI handling)
@@ -28,18 +30,8 @@
 
 using namespace std;
 
-#define NUM_MOTORS 3
-
-Actuator motors[NUM_MOTORS]{
-  {0, "Orca 1", 1}
-, {0, "Orca 2", 1}
-, {0, "Orca 3", 1}
-};
-
-int32_t force_target[3];
-int32_t position_target[3];
-
-GUI gui(motors, force_target, position_target);
+Actuator motor(0, "Orca", 1); //the channel number is left as zero here until it is specified in the gui, this can be instead hardcoded if the comport will remain the same
+GUI gui(motor);
 IrisControls4* IC4_virtual = &gui;
 
 int ic_port_number;
@@ -51,41 +43,31 @@ Actuator::ConnectionConfig connection_config;
 
 int main()
 {
-    cout << "Please enter the number of the virtual comport you would like to use to communicate with Iris Controls and press enter: \n\n";
+    cout << "Please enter the virtual comport associated with Iris Controls and press enter: \n\n";  //this can be hardcoded if you're virutal comport number will remain the same
 
     //monitor for port number until one has been entered.
     while (ic_port_number == 0) {
         cin >> ic_port_number;
     }
+    /// This section is optional, if not added will default to 625000 bps and 80us delay
+    connection_config.target_baud_rate_bps = 1250000;  //625000 //780000
+    connection_config.target_delay_us = 0;
+
+    motor.set_connection_config(connection_config);
 
     //call setup function, which will set up the connection on the selected comport
     IC4_virtual->setup(ic_port_number);
 
-
-    /// This section is optional, if not added will default to 625000 bps and 80us
-    connection_config.target_baud_rate_bps = 1250000;// 500000;  //625000 //780000
-    connection_config.target_delay_us = 0;
-
-    for (int i = 0; i < NUM_MOTORS; i++) {
-        motors[i].set_connection_config(connection_config);
-    }
     while (1) {
 
         //call run on the gui each loop 
         gui.run();
 
-        //call run in on all motors, and run out on any enabled motors
-        for (int i = 0; i < NUM_MOTORS; i++) {
-            motors[i].set_force_mN(force_target[i]);
-            motors[i].set_position_um(position_target[i]);
-            
+        //call run in, and run out to send and receive messages to motor
+        motor.run_out();
+        motor.run_in();
 
-            motors[i].run_out();
-            motors[i].run_in();
-
-        }
     }
     CloseHandle(gui.hComm);
     return 0;
 }
-
