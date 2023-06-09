@@ -20,7 +20,7 @@
 
     For questions or feedback on this file, please email <support@irisdynamics.com>.
 */
-
+#define IRISCONTROLS //allows for the use of iris controls libraries to create guis using the iriscontrols API
 /*
  * Include addional Iris SDK libraries and files within this project
  */

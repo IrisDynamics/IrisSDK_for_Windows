@@ -2,6 +2,10 @@
 
 An example that will let you connect to up to 3 motors at once and provide them a target position or target force using sliders.
 
+## IrisSDK_Command_Read_Write_Stream
+
+An example that makes use of the different stream modes and motor modes, while displaying motor feedback. (Compatible with Orca Firmware v6.1.7 or later)
+
 ## IrisSDK_Tutorial_7_Solution
 
 The final product from following the tutorial guide.

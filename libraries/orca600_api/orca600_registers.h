@@ -62,7 +62,8 @@ public:
 //		shaft_calibration_flag				= 1 << 8,
 //		force_calibration_flag				= 1 << 9,
 		position_controller_gain_set_flag	= 1 << 10,
-		current_controller_gain_set_flag	= 1 << 11
+		current_controller_gain_set_flag	= 1 << 11,
+		change_force_units_flag				= 1 << 12
 	} control_register_1_t;
 
 };
@@ -82,9 +83,11 @@ public:
 		stator_calibration_save_flag 	= 1 << 2,
 		shaft_calibration_save_flag 	= 1 << 3,
 		force_calibration_save_flag 	= 1 << 4,
-		controls_save_flag 				= 1 << 5,
+		tuning_save_flag 				= 1 << 5,
 		usr_opt_save_flag 				= 1 << 6,
-		motion_config_save_flag 		= 1 << 7
+		motion_config_save_flag 		= 1 << 7,
+		current_loop_save_flag 			= 1 << 8,
+		haptic_config_save_flag			= 1 << 9
 	} control_register_2_t;
 
 };
@@ -104,14 +107,18 @@ public:
 		sleep_sid				= 1,
 		force_control_sid		= 2,
 		position_control_sid	= 3,
-		current_tuning_sid		= 4,
+		haptic_control_sid		= 4,
 		kinematic_control_sid	= 5,
 		voltage_control_sid		= 6,
 		current_control_sid		= 7,
+		iloop_force_sid			= 8,
+		iloop_pos_sid			= 9,
+		iloop_kinematic_sid		= 10,
 		stator_calibration_sid	= 50,
 		force_calibration_sid	= 51,
 		shaft_calibration_sid	= 52,
-		adc_calibration_sid		= 53
+		adc_calibration_sid		= 53,
+		current_tuning_sid		= 54
 	} control_register_3_t;
 
 	/**
@@ -127,6 +134,28 @@ public:
 	u16 get_mode() {
 		return read(mode_reg);
 	}
+};
+
+/**
+ *  @class CONTROL_REG_4
+ *  @brief Control Register 4 resets configurations to their default factory value
+ */
+class CONTROL_REG_4 : public CONTROL_REG {
+public:
+
+	static const int address  = CTRL_REG_4;
+
+	typedef enum {
+		parameter_default_flag 				= 1 << 0,
+		tuning_default_flag			 		= 1 << 1,
+		motor_user_options_default_flag		= 1 << 2,
+		modbus_user_options_default_flag	= 1 << 3,
+		kinematic_default_flag				= 1 << 4,
+		haptic_default_flag					= 1 << 5,
+		analog_interface_default_flag		= 1 << 6
+	} control_register_4_t;
+
+
 };
 
 /**
@@ -147,7 +176,8 @@ public:
 		max_power_exceeded			= 1 << 8,
 		shaft_image_failed			= 1 << 9,
 		voltage_invalid				= 1 << 10,
-		comms_timeout				= 1 << 11
+		comms_timeout				= 1 << 11,
+		iloop_input_range			= 1 << 12
 	} orca_error_t;
 
 

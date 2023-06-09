@@ -92,9 +92,24 @@ public:
         return channel_number;
     }
 
+
+    /** @brief Returns true if a com port was previously opened and was not successfully closed */
+    bool connection_state() {
+        bool in_connection_state = false;
+
+        if (serial_success) {
+            in_connection_state = true;
+        }
+
+        return in_connection_state;
+    }
+
     void start_new_listening_thread() {
         threadID = 0;
         threadHandle = CreateThread(NULL, 0, ListeningThread, wmc, 0, threadID);
+        if (threadHandle == NULL) {
+            OutputDebugString((LPCWSTR) L"Unable to create listening thread\r\n");
+        }
     }
 
 
@@ -118,6 +133,9 @@ public:
             if (dwCommEvent == EV_RXCHAR) {
                 w->uart_isr();
             }
+            else if (dwCommEvent == 0) {
+                OutputDebugString((LPCWSTR) L"Error in comm event\r\n");
+            }
         }
         else {
             LPCWSTR eventErr = L"Error checking for incoming bytes\n";
@@ -138,11 +156,23 @@ public:
         run_out();
         cont = false;
         //adjust_baud_rate(19200);
-        if (!threadHandle==NULL) SuspendThread(threadHandle);
-        PurgeComm(hSerial, PURGE_TXABORT);
-        PurgeComm(hSerial, PURGE_RXABORT);
-        FlushFileBuffers(hSerial);
-        CloseHandle(hSerial);
+        if (!threadHandle == NULL) {
+            if (SuspendThread(threadHandle) == -1) {
+                OutputDebugString((LPCWSTR) L"Unable to suspend thread");
+            }
+        }
+        if (!PurgeComm(hSerial, PURGE_TXABORT)) {
+            OutputDebugString((LPCWSTR)L"Unable to purge tx com\r\n");
+        }
+        if (!PurgeComm(hSerial, PURGE_RXABORT)) {
+            OutputDebugString((LPCWSTR)L"Unable to purge rx com\r\n");
+        }
+        if (!FlushFileBuffers(hSerial)) {
+            OutputDebugString((LPCWSTR)L"Unable to flush file buffer\r\n");
+        }
+        if (!CloseHandle(hSerial)) {
+            OutputDebugString((LPCWSTR)L"Unable to close hSerial handle\r\n");
+        }
         //reset_state();
         //messages.reset();
         serial_success = false;
@@ -320,7 +350,7 @@ public:
                 }
                 __except (filter(GetExceptionCode(), GetExceptionInformation())) {
                     if (!disconnected_msg_sent) {
-                        IC4_virtual->print_l("Motor has been disconnected\r");
+                        OutputDebugString((LPCWSTR) L"Motor has been disconnected\r\n");
                         disconnected_msg_sent = true;
                         motor_disconnected = true;
                     }
@@ -336,8 +366,7 @@ public:
         }
         __except (filter(GetExceptionCode(), GetExceptionInformation())) {
             if (!disconnected_msg_sent) {
-                IC4_virtual->print_l("Motor has been disconnected\r");
-                IC4_virtual->flush();
+                OutputDebugString((LPCWSTR)L"Motor has been disconnected\r\n");
                 disconnected_msg_sent = true;
                 motor_disconnected = true;
             }

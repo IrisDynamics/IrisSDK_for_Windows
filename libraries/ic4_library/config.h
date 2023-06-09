@@ -27,18 +27,18 @@
 
 #ifdef IRIS_ZYNQ_7000
 #	include <xil_types.h>
-#define TX_BUFFER_BITS		13
+#define TX_BUFFER_BITS		27
 #define RX_BUFFER_BITS		13
 #define FULL_DUPLEX
 #elif defined(CPU_MKV31F256VLH12)
 #	include "device_drivers/kv31/kv31_types.h"
-#define TX_BUFFER_BITS		11
+#define TX_BUFFER_BITS		12
 #define RX_BUFFER_BITS		9
 #define IC4_BAUDRATE		480600
 #define HALF_DUPLEX
 #elif defined(__MK20DX256__)
 #	include "device_drivers/k20/k20_types.h"
-#define TX_BUFFER_BITS		13
+#define TX_BUFFER_BITS		13	//note to k8: something to try is making this smaller, might speed up the crash 
 #define RX_BUFFER_BITS		13
 #define FULL_DUPLEX
 #elif defined(WINDOWS)

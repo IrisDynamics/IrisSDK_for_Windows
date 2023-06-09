@@ -1,4 +1,0 @@
-<map id="ModbusClient" name="ModbusClient">
-<area shape="rect" id="node1" title="Modbus client serial communication virtual class. To be implemented by device drivers." alt="" coords="11,95,113,121"/>
-<area shape="rect" id="node2" href="$class_message_queue.html" title="An array implemented queue of MODBUS RTU frame objects for sequential transmittion of commands to rem..." alt="" coords="5,5,119,32"/>
-</map>

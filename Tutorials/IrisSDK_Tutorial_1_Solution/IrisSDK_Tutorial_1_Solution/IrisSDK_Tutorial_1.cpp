@@ -20,6 +20,8 @@
     For questions or feedback on this file, please email <support@irisdynamics.com>.
 */
 
+#define IRISCONTROLS //allows for the use of iris controls libraries to create guis using the iriscontrols API
+
 #include <windows.h>
 #include "ic4_library/iriscontrols4.h"
 #include "modbus_client/device_applications/actuator.h"

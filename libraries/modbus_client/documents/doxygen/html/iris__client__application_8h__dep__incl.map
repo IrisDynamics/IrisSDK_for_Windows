@@ -1,5 +1,0 @@
-<map id="iris_client_application.h" name="iris_client_application.h">
-<area shape="rect" id="node1" title="Establishes a Modbus connection status between a client and server device." alt="" coords="5,5,163,32"/>
-<area shape="rect" id="node2" href="$actuator_8h.html" title="Actuator object that abstracts the use of the modbus library/communications." alt="" coords="44,80,124,107"/>
-<area shape="rect" id="node3" href="$pneumatic__controller_8h.html" title="Pneumatic Controller object that abstracts the use of the modbus library/ communication with an Pneum..." alt="" coords="7,155,161,181"/>
-</map>

@@ -24,7 +24,8 @@
 
 #include "iriscontrols4.h"
 
-int IrisControls4::parse_console_msg(char * cmd, char * args){
+int IrisControls4::parse_console_msg(char * cmd) {
+
 	std::string command_list;
 #define SERIAL_COMMAND(_ARG_)  									\
 	COMMAND_IS (  (command_list += (std::string)_ARG_ + (std::string)"\r\n").capacity()  ? _ARG_: _ARG_    ) THEN_DO 	\
@@ -50,28 +51,20 @@ int IrisControls4::parse_console_msg(char * cmd, char * args){
 	SERIAL_COMMAND ("disconnect")
 		disconnect();
 
-//	COMMAND_IS "element_size" THEN_DO
-//
-//		print_l("Element Sizes:");
-//		print_l("\rFlexButton: ");
-//		print_d(sizeof(FlexButton));
-//		print_l(" bytes\rFlexSlider:    	");
-//		print_d(sizeof(FlexSlider));
-//		print_l(" bytes\rBasic FlexSlider:	");
-//		print_d(sizeof(Basic_FlexSlider));
-//		print_l(" bytes\rFlexLabel:     	");
-//		print_d(sizeof(FlexLabel));
-//		print_l(" bytes\rC_FlexLabel:   	");
-//		print_d(sizeof(C_FlexLabel));
-//		print_l(" bytes\rFlexData:     		");
-//		print_d(sizeof(FlexData));
-//		print_l(" bytes\rBasic FlexData:    ");
-//		print_d(sizeof(Basic_FlexData));
-//		print_l(" bytes\rFlexPlot:      	");
-//		print_d(sizeof(FlexPlot));
-//		print_l(" bytes\rDataset:       	");
-//		print_d(sizeof(Dataset));
-//		print_l(" bytes\r");
+	COMMAND_IS "element_size" THEN_DO
+
+		PRINTL ("Element Sizes (bytes):");
+		PRINTDL("FlexButton:		"	, sizeof(FlexButton));
+		PRINTDL("FlexSlider:    	"	, sizeof(FlexSlider));
+		PRINTDL("Basic FlexSlider:	"	, sizeof(Basic_FlexSlider));
+		PRINTDL("FlexLabel:     	"	, sizeof(FlexLabel));
+		PRINTDL("C_FlexLabel:   	"	, sizeof(C_FlexLabel));
+		PRINTDL("FlexData:     		"	, sizeof(FlexData));
+		PRINTDL("Basic FlexData:    "	, sizeof(Basic_FlexData));
+		PRINTDL("FlexPlot:      	"	, sizeof(FlexPlot));
+		PRINTDL("FlexDropdown:     	"	, sizeof(FlexDropdown));
+		PRINTDL("MenuOption:     	"	, sizeof(MenuOption));
+		PRINTDL("Dataset:       	"	, sizeof(Dataset));
 
 	COMMAND_IS "help" THEN_DO
 		IC4_virtual->print_l("\rIC4 commands:\r");

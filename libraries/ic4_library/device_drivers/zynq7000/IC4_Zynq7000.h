@@ -247,9 +247,12 @@ public:
 	}
 
 	/**
-	 * @brief parses any messages arriving from IC4 that were not part of IrisControls4API
-	 */
-	int parse_device_driver(char* cmd, char* args) {
+	* @fn int parse_device_driver(char* cmd)
+	* @brief Attempts to parse commands that were not successfully parsed by higher level parsers.
+	* @param[in] char* cmd - The command to be parsed
+	* @param[out] int - 1 if parsed successfully, 0 otherwise
+	*/
+	int parse_device_driver(char* cmd) {
 
 		std::string command_list = "\rZynq 7000: \r\r system_time\r";
 

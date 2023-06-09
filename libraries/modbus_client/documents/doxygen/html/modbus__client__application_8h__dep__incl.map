@@ -1,6 +1,0 @@
-<map id="modbus_client_application.h" name="modbus_client_application.h">
-<area shape="rect" id="node1" title="Base implementation of a Modbus client application layer." alt="" coords="5,5,192,32"/>
-<area shape="rect" id="node2" href="$iris__client__application_8h.html" title="Establishes a Modbus connection status between a client and server device." alt="" coords="20,80,177,107"/>
-<area shape="rect" id="node3" href="$actuator_8h.html" title="Actuator object that abstracts the use of the modbus library/communications." alt="" coords="59,155,139,181"/>
-<area shape="rect" id="node4" href="$pneumatic__controller_8h.html" title="Pneumatic Controller object that abstracts the use of the modbus library/ communication with an Pneum..." alt="" coords="22,229,175,256"/>
-</map>
