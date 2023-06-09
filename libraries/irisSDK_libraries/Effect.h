@@ -22,6 +22,7 @@
 
 //#include <General_Macros.h>
 //#include "Arduino.h"
+#include "device_config.h"
 
 class Effect {
   public: 

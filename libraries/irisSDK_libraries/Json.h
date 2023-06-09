@@ -11,6 +11,8 @@
 
 #include <iostream>
 
+std::string escape_quotes(std::string);
+
 class MalformedJsonError : public std::runtime_error {
 public:
 	MalformedJsonError(std::string _what):
@@ -84,7 +86,7 @@ public:
 			tag = JsonValueTag::t_array;
 		}
 
-		explicit JsonElement(bool _bool) {
+		JsonElement(bool _bool) {
 			str = _bool ? "true" : "false";
 			tag = _bool ? JsonValueTag::t_true : JsonValueTag::t_false;
 		}
@@ -240,7 +242,7 @@ public:
 			case JsonValueTag::t_array:
 				return arr->to_string();
 			case JsonValueTag::t_string:
-				return "\"" + str + "\"";
+				return "\"" + escape_quotes(str) + "\"";
 			case JsonValueTag::t_unknown:
 				throw std::runtime_error("Tried to create string from uninitialized json element");
 			default:
@@ -628,3 +630,18 @@ private:
 		return false;
 	}
 };
+
+// This should technically allow exactly one layer of nesting a string of a json object inside a json object. I make no promises, however
+/**
+ *	@brief	Given a string containing quotation marks, returns the same string with one backslash
+ *			prepended before each quotation mark.
+ */
+std::string escape_quotes(std::string str_to_escape) {
+	size_t quote_position = 0;
+	std::string out = str_to_escape;
+	while ((quote_position = out.find('\"', quote_position)) != std::string::npos) {
+		out = out.insert(quote_position, 1, '\\');
+		quote_position = out.find('\"', quote_position) + 1; // Skip past the quotation mark and the newly added backslash
+	}
+	return out;
+}

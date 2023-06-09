@@ -44,7 +44,7 @@ class Motor_Control {
 public:
     int32_t* force_target;
 	int32_t* position_target;
-    FlexSlider target_force, target_position;
+    FlexData target_force, target_position;
     FlexButton sleep_button, position_button, force_button;
 	FlexButton enable_button, zero_position, clear_errors;
 

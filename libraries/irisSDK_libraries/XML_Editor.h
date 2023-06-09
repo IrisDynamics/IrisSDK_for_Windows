@@ -38,6 +38,7 @@
 
 /* @brief Class that reads and writes property values to the specified XML file */
 class XML_Editor {
+protected:
 
     // Path to XML file
     const char* file_name;
@@ -78,7 +79,8 @@ class XML_Editor {
 
         // copy list and first name
         property_names = _property_names;
-        property_name = _property_names.front();
+        property_name = "";
+        if (property_names.size() > 0) property_name = _property_names.front();
 
         // Copy entire file to the string 'contents' for parsing
         get_file_contents();
@@ -88,29 +90,17 @@ class XML_Editor {
 
     /* @brief Function opens the specified XML file and returns its contents as a std string. */
     std::string get_file_contents() {
-
-        std::string line;               // String for storing a line
-        contents = "";                  // Initialize string that will contain all file contents to be parsed
-
+        std::stringstream buffer;
         config_file.open(file_name, std::ios::in);
 
-        // Copy contents from file to string
         if (config_file.is_open()) {
-
-            //add the contents of the file to a string for parsing 
-            while (std::getline(config_file, line)) {
-                contents += (line + '\n');
-            }
-
-            // Close file
+            buffer << config_file.rdbuf();
             config_file.close();
         }
-        //else {
-        //    std::cout << "Unable to open config file\n";
-        //}
+
+        contents = buffer.str();
 
         return contents;
-
     }
 
 
@@ -337,11 +327,14 @@ public:
     }
 
 
-    /* @brief Function updates the value of the specified property in the XML file */
-    void set_property(std::string _property_name, float value) {
+    /* @brief Function updates the value of the specified property in the XML file
+       @param[in] _property_names The path of XML tags to the property to change
+                  value The new value to give the specified property
+    */
+    void set_property(std::list<std::string> _property_names, float value) {
 
         // copy list and first name and copy entire file to the string 'contents' for parsing
-        init_parse({ _property_name });
+        init_parse(_property_names);
 
         // Check if file read successfully
         if (contents.length()) {
@@ -367,35 +360,10 @@ public:
 
     }
 
-
     /* @brief Function updates the value of the specified property in the XML file */
-    void set_property(std::string _property_name, int value) {
-
-        // copy list and first name and copy entire file to the string 'contents' for parsing
-        init_parse({ _property_name });
-
-        // Check if file read successfully
-        if (contents.length()) {
-
-            // Move content ptr to start of real file content
-            content_ptr = contents.find(open_tag + root_label + close_tag) + (open_tag + root_label + close_tag).length();
-
-            // Parse string to get property value as an integer
-            find_property();
-
-            if (property_found) {
-                set_property_value(value);
-            }
-            else {
-                std::cout << "Unable to find property ";
-                std::cout << property_name;
-                std::cout << "\n";
-            }
-        }
-        else {
-            std::cout << "Unable to open config file\n";
-        }
-
+    void set_property(std::string _property_name, float value) {
+        std::list<std::string> property_as_list = { _property_name };
+        set_property(property_as_list, value);
     }
 
 };
