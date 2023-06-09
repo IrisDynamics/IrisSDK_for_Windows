@@ -96,9 +96,9 @@ void Signal_Panel::setup(char * units) {
 	last_slider_value = 0;
 
 	// Initialize and hide the three input fields
-	input1.add(panel_elements, "target(*mu*m)", y_anchor + 5, x_anchor, 1, 8, 0, 1, FlexData::ALLOW_INPUT + FlexData::FRAME + FlexData::DIGITS_7);
-	input2.add(panel_elements, "period(ms)", y_anchor + 7, x_anchor, 1, 8, 0, 1, FlexData::ALLOW_INPUT + FlexData::FRAME + FlexData::DIGITS_7);
-	input3.add(panel_elements, "period(ms)", y_anchor + 9, x_anchor, 1, 8, 0, 1, FlexData::ALLOW_INPUT + FlexData::FRAME + FlexData::DIGITS_7);
+	input1.add(panel_elements, "target(*mu*m)", y_anchor + 5, x_anchor, 1, 8, 0, 1, FlexData::ALLOW_INPUT);// | FlexData::FRAME
+	input2.add(panel_elements, "period(ms)", y_anchor + 7, x_anchor, 1, 8, 0, 1, FlexData::ALLOW_INPUT ); //| FlexData::FRAME
+	input3.add(panel_elements, "period(ms)", y_anchor + 9, x_anchor, 1, 8, 0, 1, FlexData::ALLOW_INPUT); // | FlexData::FRAME
 
 	update_panel_fields(None);
 }
@@ -165,7 +165,7 @@ void Signal_Panel::run() {
 					input3.update(default_period);
 				}
 				// Initialize square signal
-				frequency =  1000. / (float)input3.get();
+				frequency =  1000. / input3.get();
 				signal_generator.square_wave.init(*init_value, input1.get(), input2.get(), frequency);
 				
 				break;
@@ -175,20 +175,22 @@ void Signal_Panel::run() {
 					// use default value if 0 was entered for period
 					input3.update(default_period);
 				}
-				frequency =  1000. / (float)input3.get(); 
+				frequency =  1000. / input3.get(); 
 
 				
 				signal_generator.triangle_wave.init(*init_value, input1.get(), input2.get(), frequency);
 				break;
 			case Sine:
 				// Initialize sine wave signal
+				IC4_virtual->print_l("\r\n input get ");
+				IC4_virtual->print_l(String(input3.get()).c_str());
 				if(input3.get()==0){
 					// use default value if 0 was entered for period
 					input3.update(default_period);
 				}
-				frequency =  1000. / (float)input3.get();
-				IC4_virtual->print_l("\rn frequency going into generator");
-				IC4_virtual->print_l(String(frequency).c_str());
+				frequency =  1000. / input3.get();
+				//IC4_virtual->print_l("\r\n frequency going into generator");
+				//IC4_virtual->print_l(String(frequency).c_str());
 				signal_generator.sine_wave.init(*init_value, input1.get(), input2.get(), frequency);
 				break;
 		}

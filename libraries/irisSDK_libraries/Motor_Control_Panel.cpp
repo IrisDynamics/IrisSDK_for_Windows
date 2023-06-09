@@ -61,9 +61,9 @@ void Motor_Control::setup(uint16_t anchor_row, uint16_t anchor_col) {
 	sleep_button.add(ctrl_elements, "Sleep", -1, anchor_row + 3, anchor_col, 2, 4);
 	position_button.add(ctrl_elements, "Position", -1, anchor_row + 3, anchor_col + 5, 2, 4);
 	force_button.add(ctrl_elements, "Force", -1, anchor_row + 3, anchor_col + 10, 2, 4);
-	//FlexDatas
-	target_force.add(ctrl_elements, "Force", anchor_row + 6, anchor_col, 1, 16, 0, 1, "mN", FlexSlider::ALLOW_INPUT + FlexData::UNITS);
-	target_position.add(ctrl_elements, "Position", anchor_row + 8, anchor_col, 1, 16, 0, 1000, "mm", FlexSlider::ALLOW_INPUT + FlexData::UNITS);
+	//sliders
+	target_force.add(ctrl_elements, "   Force", anchor_row + 6, anchor_col, 1, 16, -10000, 10000, 0, 1, FlexSlider::ALLOW_INPUT);
+	target_position.add(ctrl_elements, "Position", anchor_row + 8, anchor_col, 1, 16, 0, 150000, 0, 1, FlexSlider::ALLOW_INPUT);
 	show();
 }
 
@@ -134,6 +134,7 @@ void Motor_Control::run() {
 			position_button.disable(true);
 			force_button.disable(false);
 			motor->set_mode(Actuator::PositionMode);
+			motor->tune_position_controller(200, 0, 0, 10000);
 			target_force.disable(true);
 			target_position.disable(false);
 			target_position.update(motor->get_position_um());

@@ -19,6 +19,7 @@
 
     For questions or feedback on this file, please email <support@irisdynamics.com>.
 */
+#define IRISCONTROLS
 
 #include "iris_gui.h"   //Custom Iris control GUI interface 
 #include "ic4_library/iriscontrols4.h"      //Iris Controls library (GUI handling)
@@ -63,7 +64,7 @@ int main()
 
 
     /// This section is optional, if not added will default to 625000 bps and 80us
-    connection_config.target_baud_rate_bps = 1250000;// 500000;  //625000 //780000
+    connection_config.target_baud_rate_bps = 500000;  //625000 //780000
     connection_config.target_delay_us = 0;
 
     for (int i = 0; i < NUM_MOTORS; i++) {
