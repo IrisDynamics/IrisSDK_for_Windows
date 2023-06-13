@@ -93,6 +93,7 @@ int main()
                 motor[0].update_read_stream(2, SHAFT_SPEED_MMPS);
                 motor[0].enable_haptic_effects(Actuator::Spring0 + Actuator::Spring1);
             }
+            was_connected[0] = true;
         }
         else was_connected[0] = false;
         if (motor[1].is_connected()) {
@@ -105,6 +106,7 @@ int main()
                 motor[1].update_write_stream(2, CONSTANT_FORCE_MN, 0);
                 motor[1].enable_haptic_effects(Actuator::Spring0 + Actuator::ConstF);
             }
+            was_connected[1] = true;
         }
         else was_connected[1] = false;
 
