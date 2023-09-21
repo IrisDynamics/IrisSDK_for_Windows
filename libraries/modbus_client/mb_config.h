@@ -22,7 +22,7 @@
 
 //If you are not using the K20, KV31, or Zynq7000 platforms, uncomment ONE of the defines below:
 //#define ATMEGA328
-#define WINDOWS
+//#define WINDOWS
 //#define QT_WINDOWS
 //#define ATTINY1617
 
@@ -40,8 +40,12 @@
 
 //
 
-#define DEFAULT_INTERFRAME_uS	1000	//2000 
-#define DEFAULT_INTERCHAR_uS	8000 	//8000	// 700
+#define DEFAULT_INTERFRAME_uS	2000	//2000 
+#ifdef WINDOWS
+#define DEFAULT_INTERCHAR_uS	16000//8000 	//8000	// 700
+#else
+#define DEFAULT_INTERCHAR_uS	8000
+#endif
 #define DEFAULT_TURNAROUND_uS	500		//2000	//2000
 #define DEFAULT_RESPONSE_uS    	50000	//750000 - windows		//100000
 

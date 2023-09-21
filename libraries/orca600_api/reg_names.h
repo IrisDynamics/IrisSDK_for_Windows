@@ -1,4 +1,4 @@
-/* This file generated 2023-05-18 5:45:58 PM by memory_map_generator.xlsm */
+/* This file generated 2023-06-12 9:58:15 AM by memory_map_generator.xlsm */
 #ifndef REG_NAMES_H
 #define REG_NAMES_H
 static const char* const reg_names[973] = {
@@ -674,7 +674,7 @@ static const char* const reg_names[973] = {
 "O1_TYPE",
 "O1_FREQ_DHZ",
 "O1_DUTY",
-"",
+"CONST_FORCE_FILTER",
 "",
 "",
 "",
@@ -772,11 +772,11 @@ static const char* const reg_names[973] = {
 "ILOOP_POS_MIN_HI",
 "ILOOP_POS_MAX",
 "ILOOP_POS_MAX_HI",
-"",
-"",
-"",
-"",
-"",
+"ILOOP_KIN_TYPE",
+"ILOOP_D0_HIGH",
+"ILOOP_D0_LOW",
+"ILOOP_D2_HIGH",
+"ILOOP_D2_LOW",
 "",
 "",
 "",

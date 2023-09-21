@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#define WINDOWS
+//#define WINDOWS
 #include "windows.h"
 #ifdef IRIS_ZYNQ_7000
 #define millis() 0
@@ -37,8 +37,9 @@ static inline int64_t GetTicks_micro()
     if (!QueryPerformanceCounter(&ticks))
     {
     }
-    return ticks.QuadPart;
+    return ticks.QuadPart/ 10;
 }
+
 
 
 #elif defined(QT_WINDOWS)

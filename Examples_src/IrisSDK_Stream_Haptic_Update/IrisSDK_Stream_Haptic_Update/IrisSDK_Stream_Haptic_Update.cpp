@@ -41,12 +41,11 @@ Actuator motor[NUM_MOTORS]{ {0, "orca 0", 1}, {0, "orca 1", 1} };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ********UPDATA THESE TO YOUR RS422 PORT VALUES ensure they have been updated to have com port latency to 1 ms*******/////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-u16 port_number[NUM_MOTORS] = { 81 , 74 }; //In this case these values have been hardcoded but if the port values are not consistent 
+u16 port_number[NUM_MOTORS] = { 63 , 90 }; //In this case these values have been hardcoded but if the port values are not consistent 
                                       //they can be adjusted before initializing the object as needed
 //!< custom communication settings for baud rate and interframe delay to allow faster communication than modbus protocol
 Actuator::ConnectionConfig connection_config;
 
-u32 const_force_effect[NUM_MOTORS] = { 0, 0 };
 u32 zone_position_um[3] = { 100000, 75000, 50000};
 u32 zone_force_N[3] = { 20, 40, 60 };
 SineWave sine_force_signal;
@@ -71,7 +70,7 @@ int main()
     /// This section is optional, if not added will default to 625000 bps and 80us
     connection_config.target_baud_rate_bps = 1250000;// 500000;  //625000 //780000
     connection_config.target_delay_us = 0;
-
+    micros();
     //set comport number, then init and enable streaming.
     for (int i = 0; i < NUM_MOTORS; i++) {
         motor[i].set_connection_config(connection_config);
@@ -116,7 +115,7 @@ int main()
             motor[i].run_in();
             motor[i].run_out();
         }
-        //Sleep(1); //loop runing too fast??
+        //Sleep(200); //loop runing too fast??
     }
 }
 

@@ -143,7 +143,7 @@ public:
             new_motor = false;
 
             //copy port info 
-            new_motor_port = new_port;
+          ///  new_motor_port = new_port;
 
             // com port 1 is reserved on windows so cannot be used as actuator port
             new_motor_connection();
@@ -167,16 +167,16 @@ public:
         const char* motor_name = (*_name).c_str();
 
         //get new comport value, pass it to the actuator object and re-init      
-        motors[motor_id].set_new_comport(new_motor_port);
+        motors[motor_id].set_new_comport(new_port);
 
         motors[motor_id].init();
 
         //check to make sure the new actuator creation was successful
-        if (motors[motor_id].modbus_client.connection_state() && !(new_motor_port == motors[motor_id].modbus_client.get_port_number() && motors[motor_id].is_connected())) {
+        if (motors[motor_id].modbus_client.connection_state() && !(new_port == motors[motor_id].modbus_client.get_port_number() && motors[motor_id].is_connected())) {
 
             // Print connection success message
             IC4_virtual->print_l("Connecting motor on port ");
-            IC4_virtual->print_l((String(new_motor_port).c_str()));
+            IC4_virtual->print_l((String(new_port).c_str()));
             IC4_virtual->print_l("\r");
 
             // enable connected motor

@@ -23,6 +23,8 @@
 #ifndef LIBARY_LINKER_H_
 #define LIBARY_LINKER_H_
 
+#define WINDOWS
+
 #include "modbus_client/transaction.cpp"
 #include "irisSDK_libraries/Signal_Generator.cpp"
 #ifdef IRISCONTROLS
@@ -36,5 +38,6 @@
 #include "irisSDK_libraries/Motor_Plot_Panel.cpp"
 #include "irisSDK_libraries/Signal_Panel.cpp"
 #endif
+
 
 #endif /* LIBARY_LINKER_H_ */
