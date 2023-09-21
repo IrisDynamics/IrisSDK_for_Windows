@@ -10,6 +10,7 @@
 #include "QueryStringFormatter.h"
 #include <functional>
 #include <mutex>
+#include "IrisHttpResponseType.h"
 
 
 #pragma comment(lib, "winhttp.lib")
@@ -30,7 +31,7 @@ public:
 		without_credentials
 	};
 
-	ActiveConnection(HINTERNET hSession, std::wstring _url, std::wstring _verb, std::wstring _path, std::string _data, std::function<void(std::string)> _on_response_received) :
+	ActiveConnection(HINTERNET hSession, std::wstring _url, std::wstring _verb, std::wstring _path, std::string _data, std::function<void(HttpResponse)> _on_response_received) :
 		url(_url),
 		verb(_verb),
 		path(_path),
@@ -67,7 +68,7 @@ public:
 		return request;
 	}
 
-	void invoke_callback(std::string response) {
+	void invoke_callback(HttpResponse response) {
 		on_response_received(response);
 	}
 
@@ -104,7 +105,7 @@ public:
 private:
 	HINTERNET connection;
 	HINTERNET request;
-	std::function<void(std::string)> on_response_received;
+	std::function<void(HttpResponse)> on_response_received;
 
 	std::wstring url;
 	std::wstring verb;
@@ -259,21 +260,23 @@ public:
 	 *	@param[in]	std::wstring path - The path of the requested resource, including the query string, if
 	 *				there is any.
 	 *	@param[in]	std::string data - The payload for the request.
-	 *	@param[in]	std::function<void(std::string)> fun - A callback function that will be executed upon 
-	 *				successful completion of the request. Will not be called if the request did not complete
-	 *				successfully. Can be a lambda expression or a function pointer. The callback will be 
-	 *				executed from a separate thread, and as such, the callback MUST BE THREAD SAFE, or race
-	 *				conditions may occur. 
+	 *	@param[in]	std::function<void(HttpResponse)> fun - A callback function that will be executed upon 
+	 *				successful completion of the request. Will be called regardless of HTTP success or 
+	 *				error. Parameter contains the response body, information on whether the response was 
+	 *				successful,  and failure information if unsuccessful. Can be a lambda expression or a 
+	 *				function pointer. The callback will be executed from a separate thread, and as such, 
+	 *				the callback MUST BE THREAD SAFE, or race conditions may occur. 
 	 *
 	 *	@note		To simplify C++'s weird function pointer voodoo, we recommend using lambdas for the callback.
 	 *				The syntax for the lambda expression would be:
-	 *					[&](std::string data) { 
-	 *						<Your code goes here. The data variable contains a string with the response body> 
+	 *					[&](HttpResponse response) { 
+	 *						<Your code goes here. The HttpResponse struct is defined in 'IrisHttpResponseType.h'> 
 	 *					}
-	 *				This will give your lambda access to all variables in its current scope. Just remember that
-	 *				your code must be thread safe.
+	 *				This will give your lambda access to all variables in its current scope. Beware that the local scope 
+	 *				may have exited by the time the callback is invoked. In such a situation, all variables within that
+	 *				scope will have become invalid.
 	 */
-	void make_request(std::wstring url, std::wstring verb, std::wstring path = L"", std::string data = "", std::function<void(std::string)> fun = [](std::string) {}) {
+	void make_request(std::wstring url, std::wstring verb, std::wstring path = L"", std::string data = "", std::function<void(HttpResponse)> fun = [](HttpResponse) {}) {
 		std::shared_ptr<ActiveConnection> conn = std::make_shared<ActiveConnection>(hSession, url, verb, path, data, fun);
 		conn->set_credentials(user, pass);
 
@@ -361,7 +364,7 @@ private:
 		case 200:
 		case 201:
 			// We did it!
-			clean_up_and_invoke_callback(read_response(hRequest), hRequest);
+			clean_up_and_invoke_callback({true, read_response(hRequest), ""}, hRequest);
 			break;
 		case 401:
 			// Need to authenticate
@@ -369,16 +372,8 @@ private:
 			conn->reset_request();
 			conn->send(this, ActiveConnection::SendFlag::with_credentials);
 			break;
-		case 422:
-			//Correct message with valid params, but the server couldn't process it.
-			// This occurs with POST requests trying to create a record that already exists
-
-			//I don't know what to do with this so just deleting the request and moving on with my day
-			connections.erase(hRequest);
-			break;
 		default:
-			std::cout << "Unhandled status: " + status << std::endl;
-			freak_out();
+			clean_up_and_invoke_callback({ false, read_response(hRequest), "Encountered unhandled HTTP response code: " + std::to_string(status) }, hRequest);
 			break;
 		}
 	}
@@ -417,7 +412,7 @@ private:
 		return out;
 	}
 
-	void clean_up_and_invoke_callback(std::string data, HINTERNET hRequest) {
+	void clean_up_and_invoke_callback(HttpResponse data, HINTERNET hRequest) {
 		std::shared_ptr<ActiveConnection> conn = connections.get(hRequest);
 
  		conn->invoke_callback(data);

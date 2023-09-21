@@ -44,39 +44,6 @@ public:
 
 	IC4_windows() {
 		set_full_duplex();
-
-		//hComm = CreateFileA("\\\\.\\COM51",                //port name
-		//    GENERIC_READ | GENERIC_WRITE, //Read/Write
-		//    0,                            // No Sharing
-		//    NULL,                         // No Security
-		//    OPEN_EXISTING,// Open existing port only
-		//    0,            // Non Overlapped I/O
-		//    NULL);        // Null for Comm Devices
-
-		//if (hComm == INVALID_HANDLE_VALUE)
-		//    printf("Error in opening serial port");
-		//else
-		//    printf("opening serial port successful");
-
-
-
-		////get current state
-		//dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-		//if (!GetCommState(hComm, &dcbSerialParams)) {
-		//    LPCWSTR getErr = L"Error getting dcb state\n";
-		//    OutputDebugString(getErr);
-		//}
-
-		////set new state
-		//dcbSerialParams.BaudRate = 220713;
-		//dcbSerialParams.ByteSize = 8;
-		//dcbSerialParams.StopBits = ONESTOPBIT;
-		//dcbSerialParams.Parity = EVENPARITY;
-		//// dcbSerialParams.fRtsControl = RTS_CONTROL_ENABLE;
-		//if (!SetCommState(hComm, &dcbSerialParams)) {
-		//    LPCWSTR paramErr = L"Error setting serial port state\n";
-		//    OutputDebugString(paramErr);
-		//}
 	}
 
 	void setup(int comport) {
@@ -252,6 +219,9 @@ public:
 
 		return (var_to_str_array);
 	}
+
+
+
 
 	/**
 	* @fn int parse_device_driver(char* cmd)

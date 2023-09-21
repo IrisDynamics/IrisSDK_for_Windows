@@ -550,7 +550,13 @@ public:
 	 * @param max_force force in milli-Newtons
 	 */
 	void set_max_force(s32 max_force){
-		write_register(USER_MAX_FORCE 	,max_force);
+		uint8_t data[4] =	{
+			uint8_t(max_force >> 8),
+			uint8_t(max_force),
+			uint8_t(max_force >> 24),
+			uint8_t(max_force >> 16)
+		};
+		write_registers(USER_MAX_FORCE, 2, data);
 	}
 
 	/**
@@ -627,7 +633,11 @@ public:
 	* @param type	0 = minimize power, 1 = maximize smoothness
 	* @param chain	Enable linking this motion to the next
 	*/
-	void set_kinematic_motion(int ID,int32_t position, int32_t time, int16_t chain_delay, int8_t type, int8_t chain) {
+	void set_kinematic_motion(int ID,int32_t position, int32_t time, int16_t delay, int8_t type, int8_t auto_next, int8_t next_id = -1) {
+		if (next_id == -1) {
+			next_id = ID + 1;
+		}
+		
 		uint8_t data[12] = {
 							uint8_t(position >> 8),
 							uint8_t(position),
@@ -637,10 +647,10 @@ public:
 							uint8_t(time),
 							uint8_t(time >> 24),
 							uint8_t(time >> 16),
-							uint8_t(chain_delay >> 8),
-							uint8_t(chain_delay),
+							uint8_t(delay >> 8),
+							uint8_t(delay),
 							uint8_t (0),
-							uint8_t((type<<1) | chain)
+							uint8_t((type<<1) | (next_id << 3) | auto_next)
 							};
 		write_registers(KIN_MOTION_0 + (6*ID), 6, data);
 	}
@@ -731,6 +741,15 @@ public:
 		write_multiple_registers_fn(connection_config.server_address, reg_address, num_registers, reg_data);
 	}
 
+	void write_registers(uint16_t reg_address, uint16_t num_registers, uint16_t* reg_data) {
+		uint8_t data[126];
+		for (int i = 0; i < num_registers; i++) {
+			data[i*2] = reg_data[i] >> 8;
+			data[i * 2 + 1] = reg_data[i];
+		}
+		write_multiple_registers_fn(connection_config.server_address, reg_address, num_registers, data);
+	}
+
 	/**
 	* @brief Return the contents of the given register from the controller's copy of the motor's memory map. 
 	* 
@@ -775,9 +794,9 @@ private:
 	void synchronize_memory_map() override {
 		read_registers(PARAM_REG_START     	, PARAM_REG_SIZE     			) ;
 		read_registers(ERROR_0				, ADC_DATA_COLLISION-ERROR_0	) ;
-		read_registers(STATOR_CAL_REG_START	, STATOR_CAL_REG_SIZE			) ;
-		read_registers(SHAFT_CAL_REG_START 	, SHAFT_CAL_REG_SIZE 			) ;
-		read_registers(FORCE_CAL_REG_START 	, FORCE_CAL_REG_SIZE 			) ;
+		//read_registers(STATOR_CAL_REG_START	, STATOR_CAL_REG_SIZE			) ;
+		//read_registers(SHAFT_CAL_REG_START 	, SHAFT_CAL_REG_SIZE 			) ;
+		//read_registers(FORCE_CAL_REG_START 	, FORCE_CAL_REG_SIZE 			) ;
 		read_registers(TUNING_REG_START    	, TUNING_REG_SIZE    			) ;
 	}
 

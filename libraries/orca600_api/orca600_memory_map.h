@@ -4,7 +4,7 @@
 * @brief Addresses of Orca600 registers
 */
 
-/* This file generated 2023-05-18 5:45:58 PM by memory_map_generator.xlsm */
+/* This file generated 2023-06-12 9:58:15 AM by memory_map_generator.xlsm */
 
 /* NOTE: Registers of width 2 or more that will be accessed by 32 bit pointers MUST begin on an even array index. */
 
@@ -341,8 +341,9 @@
 #define O1_TYPE                       669       // HAPTIC_SECTION       | Width: 1    | Type of periodic effect 0 (square), 1 (sine), 2 (triangle), 3 (sawtooth)
 #define O1_FREQ_DHZ                   670       // HAPTIC_SECTION       | Width: 1    | Frequency of periodic effect
 #define O1_DUTY                       671       // HAPTIC_SECTION       | Width: 1    | Pulse width modulation of signal as a % of duty cycle max value
+#define CONST_FORCE_FILTER            672       // HAPTIC_SECTION       | Width: 1    | Amount of filtering on constant force inputs.
 /***********************************************************
- * Non-contiguous addresses. 83 free registers. 672 - 754
+ * Non-contiguous addresses. 82 free registers. 673 - 754
  ***********************************************************/
 #define ILOOP_MSG_FLAG                755       // CURRENT_LOOP_SECTION | Width: 1    | Flag produced by receiving a Seagull modbus command and consumed by the current loop controller
 #define ILOOP_DIN                     756       // CURRENT_LOOP_SECTION | Width: 1    | Status of Ceagle digital inputs. Each input represented by a bit.
@@ -359,8 +360,13 @@
 #define ILOOP_POS_MIN_HI              767       // CURRENT_LOOP_SECTION | Width: 1    | Position that maps to 4 mA. High 2 bytes. In micrometers.
 #define ILOOP_POS_MAX                 768       // CURRENT_LOOP_SECTION | Width: 1    | Position that maps to 20 mA. Low 2 bytes. In micrometers.
 #define ILOOP_POS_MAX_HI              769       // CURRENT_LOOP_SECTION | Width: 1    | Position that maps to 20 mA. High 2 bytes. In micrometers.
+#define ILOOP_KIN_TYPE                770       // CURRENT_LOOP_SECTION | Width: 1    | Type of trigger behaviour
+#define ILOOP_D0_HIGH                 771       // CURRENT_LOOP_SECTION | Width: 1    | Motion id value for rising edge digital 0
+#define ILOOP_D0_LOW                  772       // CURRENT_LOOP_SECTION | Width: 1    | Motion id value for falling edge digital 0
+#define ILOOP_D2_HIGH                 773       // CURRENT_LOOP_SECTION | Width: 1    | Motion id value for rising edge digital 2
+#define ILOOP_D2_LOW                  774       // CURRENT_LOOP_SECTION | Width: 1    | Motion id value for falling edge digital 2
 /***********************************************************
- * Non-contiguous addresses. 8 free registers. 770 - 777
+ * Non-contiguous addresses. 3 free registers. 775 - 777
  ***********************************************************/
 #define KINEMATIC_SECTION_VERSION     778       // KINEMATIC_SECTION    | Width: 1    | 
 #define KIN_CONFIG                    779       // KINEMATIC_SECTION    | Width: 1    | Kinematic controller configuration.
@@ -417,8 +423,8 @@
 #define PARAM_REG_SIZE                19
 #define USR_OPT_REG_SIZE              11
 #define KIN_REG_SIZE                  195
-#define ILOOP_REG_SIZE                11
-#define HAPTIC_REG_SIZE                32
+#define ILOOP_REG_SIZE                16
+#define HAPTIC_REG_SIZE                33
 #define STATOR_CAL_REG_END            88
 #define SHAFT_CAL_REG_END             106
 #define FORCE_CAL_REG_END             119
@@ -426,6 +432,6 @@
 #define PARAM_REG_END                 418
 #define USR_OPT_REG_END               170
 #define KIN_REG_END                   972
-#define ILOOP_REG_END                 770
-#define HAPTIC_REG_END                 671
+#define ILOOP_REG_END                 775
+#define HAPTIC_REG_END                 672
 #endif
