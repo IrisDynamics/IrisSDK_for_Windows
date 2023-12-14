@@ -44,12 +44,20 @@ bool was_moving = false;
 bool is_moving = false;
 uint64_t start_time = 0;
 int32_t last_position = 0;
+uint64_t last_kin_status_update = 0;
 
 //timer is used to allow smooth communications.
 void motor_comms() {
     while (1) {
         motor.run_in();
         motor.run_out();
+        if ((micros() - last_kin_status_update) > 1000) {
+            motor.update_read_stream(1, KINEMATIC_STATUS);
+            last_kin_status_update = micros();
+        }
+        else {
+            motor.update_read_stream(2, SHAFT_SPEED_MMPS);
+        }
         is_moving = (motor.get_orca_reg_content(KINEMATIC_STATUS) & MOTION_ACTIVE);
         if ((motor.get_orca_reg_content(MODE_OF_OPERATION) == Actuator::KinematicMode) && motor.new_data() && is_moving) {
             if (was_moving != is_moving) {
@@ -72,7 +80,7 @@ void motor_comms() {
                 std::string message = std::string()
                     + "\t" + std::to_string(ms_time)
                     + "\t" + std::to_string(motor.get_position_um())
-                    + "\t" + std::to_string((motor.get_position_um()-last_position)/ ms_time)
+                    + "\t" + std::to_string(motor.get_orca_reg_content(SHAFT_SPEED_MMPS) + ((int32_t)motor.get_orca_reg_content(SHAFT_SHEED_H)<<16))
                     + "\t" + std::to_string(motor.get_force_mN())
                     + "\t" + std::to_string(motor.get_power_W())
                     + "\t" + std::to_string(motor.get_voltage_mV())
