@@ -51,7 +51,7 @@ void motor_comms() {
     while (1) {
         motor.run_in();
         motor.run_out();
-        if ((micros() - last_kin_status_update) > 1000) {
+        if ((micros() - last_kin_status_update) > 10000) {
             motor.update_read_stream(1, KINEMATIC_STATUS);
             last_kin_status_update = micros();
         }
